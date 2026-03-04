@@ -125,3 +125,56 @@ tree_slices/
 
 ```
 
+---
+
+## 🏗️ Re-aggregating Annotations (3D Reconstruction)
+
+Once you have finished labeling your 2D slices in **CVAT**, use the `tree_aggregate.R` script to project those labels back onto the original 3D point cloud. This allows you to visualize your "trunk," "branch," and "twig" classifications in 3D.
+
+### 1. Prerequisites
+
+You will need **R** installed. Open your R terminal or RStudio and install the necessary spatial and data libraries:
+
+```r
+install.packages(c("lidR", "xml2", "jsonlite", "data.table"))
+
+```
+
+### 2. Exporting from CVAT
+
+1. Open your project in CVAT.
+2. Go to **Menu > Export Task Dataset**.
+3. Select the **CVAT for images 1.1** (XML) format.
+4. Download and unzip the file into your project directory.
+
+### 3. Running the Aggregator
+
+Before running the script, open `tree_aggregate.R` and update the **USER SETTINGS** section (Lines 11-16) to match your local file names:
+
+```r
+# --- CHANGE THESE TO MATCH YOUR PROJECT ---
+las_file      <- "your_original_file.las"       # The raw point cloud
+xml_file      <- "path/to/annotations.xml"      # The file you got from CVAT
+metadata_file <- "path/to/metadata.json"        # The JSON from the Python slicer
+output_file   <- "annotated_tree.las"           # The name of your new 3D file
+
+```
+
+Run the script in your PowerShell or R terminal:
+
+```powershell
+Rscript tree_aggregate.R
+
+```
+
+### 4. Viewing the Results
+
+The script creates a new `.las` file where the **Classification** field of each point is updated based on your CVAT labels:
+
+* **1**: Trunk
+* **2**: Branch
+* **3**: Twigs
+* **4**: Grass
+
+**💡 Pro-Tip:** Open the resulting file in **CloudCompare**. To see your work, change the "Color Scale" or "Scalar Field" view to **Classification**.
+
