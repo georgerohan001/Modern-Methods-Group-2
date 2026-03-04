@@ -66,3 +66,62 @@ git push origin main
 * **Pull Before Push:** Always run `git pull` before you start working to avoid merge conflicts.
 * **Small Commits:** It is better to push 5 small changes than one giant update. It makes it easier to fix if something breaks!
 * **Large Data:** Do **not** commit raw `.las` or `.tif` files larger than 50MB. Use the shared cloud drive for raw data and Git for the processing scripts.
+
+---
+
+## 🌳 Point Cloud Slicing Tool
+
+This repository includes a Python script to convert `.las` point clouds into a stack of 2D density PNG slices. This is useful for analyzing tree structure, DBH (Diameter at Breast Height), or crown volume.
+
+### 1. Prerequisites
+
+Ensure you have the required Python libraries installed:
+
+```powershell
+pip install laspy numpy opencv-python
+
+```
+
+### 2. How to Use the Slicer
+
+1. **Prepare the Data:** Copy the Python script into the same folder as your `.las` file (e.g., `group_321_GP.las`).
+2. **Edit the Script:** Open the script and update the `FILE_NAME` variable to match your file:
+```python
+# --- CONFIGURATION ---
+FILE_NAME = "your_actual_filename_here.las"
+
+```
+
+
+3. **Run the Script:**
+```powershell
+python your_script_name.py
+
+```
+
+
+
+### 3. What Happens Next?
+
+* **Automatic Slicing:** The script calculates the "global bounds" of your tree so every image is the exact same width and height.
+* **Output:** A new folder named `tree_slices/[tree_name]` will be created.
+* **Files:**
+* **PNGs:** Each image represents a vertical slice (default is 20cm thick).
+* **Metadata.json:** Contains the spatial coordinates (X, Y, Z) and pixel size for every slice so you can map pixels back to real-world coordinates.
+
+
+
+---
+
+### ⚠️ A Note for the Team (Git Large Files)
+
+**Important:** Do **not** commit the generated `tree_slices/` folder or large `.las` files to GitHub. These files are too large for Git and will slow down everyone's `pull` and `push` times.
+
+To keep our repo clean, ensure your `.gitignore` includes:
+
+```text
+*.las
+tree_slices/
+
+```
+
