@@ -11,7 +11,7 @@ To keep our forestry data and scripts organized, please follow this standard Git
 If you haven't downloaded the project to your computer yet, run:
 
 ```powershell
-git clone https://github.com/your-username/Modern-Methods-Group-2.git
+git clone https://github.com/georgerohan001/Modern-Methods-Group-2.git
 
 ```
 
