@@ -178,3 +178,69 @@ The script creates a new `.las` file where the **Classification** field of each 
 
 **💡 Pro-Tip:** Open the resulting file in **CloudCompare**. To see your work, change the "Color Scale" or "Scalar Field" view to **Classification**.
 
+
+## 🎯 Trunk Gradient Extraction (YOLO to Heatmap)
+
+This script processes your labeled 2D slices and generates grayscale "gradient" images. In these images, tree trunks are pure white, and the background fades to black based on its distance from the nearest trunk.
+
+### 1. Prerequisites
+
+You will need the **Pillow** and **NumPy** libraries:
+
+```powershell
+pip install pillow numpy
+
+```
+
+### 2. CVAT Export Format
+
+When you finish labeling in CVAT, you must export your annotations in the **YOLO 1.1** format.
+
+### 3. Directory Structure
+
+For the script to work, your data must be organized exactly like this:
+
+```text
+YOLO_Extraction_1/
+├── obj.names           # List of labels (e.g., twigs, trunk, branch, grass)
+├── obj.data            # Metadata about the dataset
+├── train.txt           # List of paths to all images
+├── obj_train_data/     # Folder containing images AND .txt labels
+│   ├── slice_000.png   # The image
+│   ├── slice_000.txt   # YOLO label: [class_id cx cy w h]
+│   ├── slice_001.png
+│   └── slice_001.txt
+└── gradient.py  <-- Place your script here
+
+```
+
+### 4. How the Labels Work
+
+* **`obj.names`**: The order matters! If "trunk" is the second item, its ID is `1`.
+* **`.txt` files**: Each file contains the coordinates for the boxes. For example, `1 0.77 0.27 0.04 0.05` means a trunk is located at that specific spot.
+
+### 5. Running the Script
+
+1. Open `gradient.py`.
+2. Update the `BASE_DIR` at the top of the script to match your folder path:
+```python
+BASE_DIR = Path(r"C:\Users\...\YOLO_Extraction_1")
+
+```
+
+3. Run the script:
+```powershell
+python gradient.py
+
+```
+
+### 6. Output
+
+The script will create a new folder called `gradient_images/`.
+
+* **White areas:** Represent the exact location of tree trunks.
+* **Gray/Black areas:** Represent the distance from the trunk (useful for machine learning "loss" calculations).
+
+
+
+
