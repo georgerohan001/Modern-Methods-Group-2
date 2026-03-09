@@ -1,0 +1,4 @@
+numpy
+Pillow
+laspy
+opencv-python
