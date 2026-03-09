@@ -5,7 +5,7 @@ import os
 import json
 
 # --- CONFIGURATION ---
-FILE_NAME = "group_321_GP.las"
+FILE_NAME = "tree_00844.las"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 FILE_PATH = os.path.join(SCRIPT_DIR, FILE_NAME)
 BASE_OUTPUT_FOLDER = "tree_slices"
