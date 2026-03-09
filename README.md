@@ -1,246 +1,560 @@
-# Modern Methods with TLS and UAV Group 2
+# Modern Methods with TLS and UAV – Group 1
 
 ---
 
-## 🚀 How to Contribute to This Project
+# 🚀 How to Contribute to This Project
 
-To keep our forestry data and scripts organized, please follow this standard Git workflow every time you work on the project.
+To keep our forestry data, annotations, and scripts organized, please follow this **standard Git workflow** every time you work on the project.
 
-### 1. Initial Setup (First time only)
+---
+
+## 1. Initial Setup (First Time Only)
 
 If you haven't downloaded the project to your computer yet, run:
 
 ```powershell
 git clone https://github.com/georgerohan001/Modern-Methods-Group-2.git
-
 ```
 
-### 2. The Daily Workflow
+This downloads the repository to your local machine.
 
-Follow these steps **every time** you want to make a change:
+---
 
-#### **Step A: Sync with the Group**
+## 2. The Daily Workflow
 
-Before you start typing any code or moving any TLS files, make sure you have the latest version from everyone else.
+Follow these steps **every time you want to make a change**.
+
+### Step A — Sync with the Group
+
+Before writing code or processing any TLS/UAV data, always download the newest changes from the group.
 
 ```powershell
 git pull origin main
-
 ```
 
-#### **Step B: Make Your Changes**
+This prevents merge conflicts and ensures everyone is working with the latest files.
 
-Open your files, run your processing scripts, or add your UAV data analysis. Save your files as usual.
+---
 
-#### **Step C: Stage the Changes**
+### Step B — Make Your Changes
 
-Tell Git which files you want to prepare for the upload. The `.` means "add everything."
+Edit scripts, run processing workflows, or add analysis outputs.
+
+Save your files normally.
+
+---
+
+### Step C — Stage the Changes
+
+Tell Git which files should be included in your update.
 
 ```powershell
 git add .
-
 ```
 
-#### **Step D: Commit the Work**
+The `.` means **add all changed files**.
 
-Create a "snapshot" of your work with a clear message describing what you did (e.g., "Added noise filter to LiDAR script").
+---
+
+### Step D — Commit the Work
+
+Create a snapshot of your changes with a short explanation.
 
 ```powershell
 git commit -m "Brief description of what you changed"
-
 ```
 
-#### **Step E: Push to the Cloud**
+Example:
 
-Upload your snapshot so the rest of the group can see it.
+```
+git commit -m "Added trunk detection gradient generator"
+```
+
+---
+
+### Step E — Push to the Cloud
+
+Upload your snapshot so the rest of the group can access it.
 
 ```powershell
 git push origin main
-
 ```
 
 ---
 
-### ⚠️ Important Rules for This Project
+## ⚠️ Important Rules for This Project
 
-* **Pull Before Push:** Always run `git pull` before you start working to avoid merge conflicts.
-* **Small Commits:** It is better to push 5 small changes than one giant update. It makes it easier to fix if something breaks!
-* **Large Data:** Do **not** commit raw `.las` or `.tif` files larger than 50MB. Use the shared cloud drive for raw data and Git for the processing scripts.
+### Pull Before Push
+
+Always run:
+
+```powershell
+git pull
+```
+
+before starting work.
 
 ---
 
-## 🌳 Point Cloud Slicing Tool
+### Small Commits
 
-This repository includes a Python script to convert `.las` point clouds into a stack of 2D density PNG slices. This is useful for analyzing tree structure, DBH (Diameter at Breast Height), or crown volume.
+It is better to push **multiple small commits** instead of one large update.
 
-### 1. Prerequisites
+Benefits:
 
-Ensure you have the required Python libraries installed:
+* Easier debugging
+* Easier collaboration
+* Clear project history
+
+---
+
+### Large Data Files
+
+Do **not commit large raw data files**.
+
+Avoid uploading:
+
+```
+.las
+.tif
+```
+
+files larger than **50 MB**.
+
+Instead:
+
+* Store raw data in the **shared cloud drive**
+* Store **scripts and processing pipelines in Git**
+
+---
+
+# 🌳 Point Cloud Slicing Tool
+
+This repository includes a Python script that converts `.las` point clouds into a stack of **2D density PNG slices**.
+
+These slices are used for:
+
+* Tree structure analysis
+* DBH (Diameter at Breast Height)
+* Crown volume estimation
+* Image annotation workflows
+
+---
+
+## 1. Prerequisites
+
+Install the required Python libraries:
 
 ```powershell
 pip install laspy numpy opencv-python
-
 ```
 
-### 2. How to Use the Slicer
+---
 
-1. **Prepare the Data:** Copy the Python script into the same folder as your `.las` file (e.g., `group_321_GP.las`).
-2. **Edit the Script:** Open the script and update the `FILE_NAME` variable to match your file:
+## 2. How to Use the Slicer
+
+### Step 1 — Prepare the Data
+
+Place the slicer script in the same folder as your `.las` file.
+
+Example:
+
+```
+group_321_GP.las
+pointcloud_slicer.py
+```
+
+---
+
+### Step 2 — Edit the Script
+
+Open the script and update the configuration section:
+
 ```python
 # --- CONFIGURATION ---
 FILE_NAME = "your_actual_filename_here.las"
-
 ```
 
+---
 
-3. **Run the Script:**
+### Step 3 — Run the Script
+
 ```powershell
 python your_script_name.py
-
 ```
-
-
-
-### 3. What Happens Next?
-
-* **Automatic Slicing:** The script calculates the "global bounds" of your tree so every image is the exact same width and height.
-* **Output:** A new folder named `tree_slices/[tree_name]` will be created.
-* **Files:**
-* **PNGs:** Each image represents a vertical slice (default is 20cm thick).
-* **Metadata.json:** Contains the spatial coordinates (X, Y, Z) and pixel size for every slice so you can map pixels back to real-world coordinates.
-
-
 
 ---
 
-### ⚠️ A Note for the Team (Git Large Files)
+## 3. What Happens Next?
 
-**Important:** Do **not** commit the generated `tree_slices/` folder or large `.las` files to GitHub. These files are too large for Git and will slow down everyone's `pull` and `push` times.
+The slicer performs several automatic steps.
 
-To keep our repo clean, ensure your `.gitignore` includes:
+### Automatic Tree Bounds
 
-```text
+The script calculates the **global spatial bounds** of the tree.
+
+This ensures **all slices have identical dimensions**.
+
+---
+
+### Output Folder
+
+A folder is generated:
+
+```
+tree_slices/[tree_name]/
+```
+
+---
+
+### Generated Files
+
+Inside this folder you will find:
+
+#### PNG Slices
+
+Each PNG represents a **vertical slice of the tree**.
+
+Default slice thickness:
+
+```
+20 cm
+```
+
+---
+
+#### Metadata File
+
+```
+metadata.json
+```
+
+This file stores:
+
+* X coordinate
+* Y coordinate
+* Z slice height
+* pixel resolution
+
+This allows **mapping pixels back to real-world coordinates**.
+
+---
+
+## ⚠️ Note for the Team (Git Large Files)
+
+Do **not commit** the following to GitHub:
+
+```
+tree_slices/
+*.las
+```
+
+These files are too large and will slow down the repository.
+
+Make sure `.gitignore` contains:
+
+```
 *.las
 tree_slices/
-
 ```
 
 ---
 
-## 🏗️ Re-aggregating Annotations (3D Reconstruction)
+# 🏗️ Re-aggregating Annotations (3D Reconstruction)
 
-Once you have finished labeling your 2D slices in **CVAT**, use the `tree_aggregate.R` script to project those labels back onto the original 3D point cloud. This allows you to visualize your "trunk," "branch," and "twig" classifications in 3D.
+After labeling the 2D slices in **CVAT**, you can project those labels back onto the **original 3D point cloud**.
 
-### 1. Prerequisites
+This step reconstructs the labeled tree in **3D space**.
 
-You will need **R** installed. Open your R terminal or RStudio and install the necessary spatial and data libraries:
+---
+
+## 1. Prerequisites
+
+Install required R packages:
 
 ```r
 install.packages(c("lidR", "xml2", "jsonlite", "data.table"))
-
 ```
 
-### 2. Exporting from CVAT
+---
 
-1. Open your project in CVAT.
-2. Go to **Menu > Export Task Dataset**.
-3. Select the **CVAT for images 1.1** (XML) format.
-4. Download and unzip the file into your project directory.
+## 2. Exporting from CVAT
 
-### 3. Running the Aggregator
+1. Open the task in **CVAT**
+2. Click:
 
-Before running the script, open `tree_aggregate.R` and update the **USER SETTINGS** section (Lines 11-16) to match your local file names:
+```
+Menu → Export Task Dataset
+```
+
+3. Select format:
+
+```
+CVAT for images 1.1
+```
+
+4. Download and unzip the export.
+
+---
+
+## 3. Running the Aggregator
+
+Open `tree_aggregate.R` and update the user configuration:
 
 ```r
 # --- CHANGE THESE TO MATCH YOUR PROJECT ---
-las_file      <- "your_original_file.las"       # The raw point cloud
-xml_file      <- "path/to/annotations.xml"      # The file you got from CVAT
-metadata_file <- "path/to/metadata.json"        # The JSON from the Python slicer
-output_file   <- "annotated_tree.las"           # The name of your new 3D file
-
+las_file      <- "your_original_file.las"
+xml_file      <- "path/to/annotations.xml"
+metadata_file <- "path/to/metadata.json"
+output_file   <- "annotated_tree.las"
 ```
 
-Run the script in your PowerShell or R terminal:
+Run the script:
 
 ```powershell
 Rscript tree_aggregate.R
-
 ```
 
-### 4. Viewing the Results
+---
 
-The script creates a new `.las` file where the **Classification** field of each point is updated based on your CVAT labels:
+## 4. Viewing the Results
 
-* **1**: Trunk
-* **2**: Branch
-* **3**: Twigs
-* **4**: Grass
+The script produces a new `.las` file where each point receives a **classification value**.
 
-**💡 Pro-Tip:** Open the resulting file in **CloudCompare**. To see your work, change the "Color Scale" or "Scalar Field" view to **Classification**.
+Classification mapping:
 
+```
+1  → Trunk
+2  → Branch
+3  → Twigs
+4  → Grass
+```
 
-## 🎯 Trunk Gradient Extraction (YOLO to Heatmap)
+---
 
-This script processes your labeled 2D slices and generates grayscale "gradient" images. In these images, tree trunks are pure white, and the background fades to black based on its distance from the nearest trunk.
+### Visualizing in CloudCompare
 
-### 1. Prerequisites
+Open the new `.las` file in **CloudCompare**.
 
-You will need the **Pillow** and **NumPy** libraries:
+Set the color mode to:
+
+```
+Scalar Field → Classification
+```
+
+This will display the tree with colored structural labels.
+
+---
+
+# 🎯 Channel Creator (Multi-Channel Training Image Generator)
+
+The script **`channel_creator.py`** generates multiple grayscale training channels from the labeled slice images.
+
+It replaces several older scripts by producing **all training channels in a single pipeline**.
+
+The script reads **YOLO bounding box annotations** exported from CVAT and creates three derived images for each slice:
+
+1. **Index Channel** – encodes slice order
+2. **Label Mask Channel** – encodes object classes
+3. **Trunk Gradient Channel** – distance heatmap from trunks
+
+These channels are useful for **machine learning models that benefit from additional spatial context**.
+
+---
+
+## 1. Prerequisites
+
+Install the required libraries:
 
 ```powershell
 pip install pillow numpy
-
 ```
 
-### 2. CVAT Export Format
+---
 
-When you finish labeling in CVAT, you must export your annotations in the **YOLO 1.1** format.
+## 2. Required Dataset Structure
 
-### 3. Directory Structure
+Your dataset must follow this structure:
 
-For the script to work, your data must be organized exactly like this:
-
-```text
+```
 YOLO_Extraction_1/
-├── obj.names           # List of labels (e.g., twigs, trunk, branch, grass)
-├── obj.data            # Metadata about the dataset
-├── train.txt           # List of paths to all images
-├── obj_train_data/     # Folder containing images AND .txt labels
-│   ├── slice_000.png   # The image
-│   ├── slice_000.txt   # YOLO label: [class_id cx cy w h]
+│
+├── obj.names
+├── obj.data
+├── train.txt
+│
+├── obj_train_data/
+│   ├── slice_000.png
+│   ├── slice_000.txt
 │   ├── slice_001.png
 │   └── slice_001.txt
-└── gradient.py  <-- Place your script here
-
+│
+└── channel_creator.py
 ```
 
-### 4. How the Labels Work
+### Explanation
 
-* **`obj.names`**: The order matters! If "trunk" is the second item, its ID is `1`.
-* **`.txt` files**: Each file contains the coordinates for the boxes. For example, `1 0.77 0.27 0.04 0.05` means a trunk is located at that specific spot.
+| File              | Purpose                          |
+| ----------------- | -------------------------------- |
+| `obj.names`       | Ordered list of class labels     |
+| `train.txt`       | List of training image paths     |
+| `obj_train_data/` | Images and YOLO annotation files |
+| `.txt` files      | Bounding boxes in YOLO format    |
 
-### 5. Running the Script
+Example YOLO label:
 
-1. Open `gradient.py`.
-2. Update the `BASE_DIR` at the top of the script to match your folder path:
+```
+1 0.77 0.27 0.04 0.05
+```
+
+Format:
+
+```
+[class_id center_x center_y width height]
+```
+
+Coordinates are **normalized (0–1)** relative to the image size.
+
+---
+
+## 3. Output Channels
+
+Running the script creates **three output folders**.
+
+```
+YOLO_Extraction_1/
+│
+├── index_gray_images/
+├── label_polygon_images/
+└── gradient_images/
+```
+
+Each folder contains an image corresponding to every input slice.
+
+---
+
+### Channel 1 — Index Channel
+
+Folder:
+
+```
+index_gray_images/
+```
+
+Each slice receives a grayscale value based on its **position in the dataset**.
+
+```
+first slice   → black
+last slice    → white
+```
+
+This gives neural networks **vertical positional information** about the tree.
+
+---
+
+### Channel 2 — Label Mask Channel
+
+Folder:
+
+```
+label_polygon_images/
+```
+
+This channel converts bounding boxes into **grayscale masks representing object classes**.
+
+Example intensity mapping:
+
+```
+Trunk   → bright
+Branch  → medium gray
+Twig    → darker
+Grass   → darker
+```
+
+Each object appears as a **filled rectangle** corresponding to its YOLO bounding box.
+
+---
+
+### Channel 3 — Trunk Gradient Channel
+
+Folder:
+
+```
+gradient_images/
+```
+
+This channel generates a **distance-based heatmap** from trunk locations.
+
+```
+White  → trunk center
+Gray   → near trunk
+Black  → far from trunk
+```
+
+The gradient fades based on the distance to the **nearest trunk bounding box**.
+
+This is useful for:
+
+* trunk localization
+* spatial loss weighting
+* machine learning supervision signals
+
+---
+
+## 4. Running the Script
+
+Open `channel_creator.py` and set the base path:
+
 ```python
 BASE_DIR = Path(r"C:\Users\...\YOLO_Extraction_1")
-
 ```
 
-3. Run the script:
+Then run:
+
 ```powershell
-python gradient.py
-
+python channel_creator.py
 ```
 
-### 6. Output
+---
 
-The script will create a new folder called `gradient_images/`.
+## 5. Processing Pipeline
 
-* **White areas:** Represent the exact location of tree trunks.
-* **Gray/Black areas:** Represent the distance from the trunk (useful for machine learning "loss" calculations).
+For each image slice the script:
 
+1. Reads the original slice image
+2. Loads the YOLO label file
+3. Extracts trunk bounding boxes
+4. Generates the three training channels
+5. Saves them to their output folders
 
+All channels maintain the **exact same resolution as the original slice**.
 
+---
 
+## 6. Why Multi-Channel Training Helps
+
+Providing additional channels can improve model learning because it adds structured spatial information:
+
+| Channel    | Information            |
+| ---------- | ---------------------- |
+| Index      | Vertical tree position |
+| Label mask | Class location         |
+| Gradient   | Distance to trunk      |
+
+This creates a richer representation than using raw slices alone.
+
+---
+
+## 7. Important Notes
+
+Do **not commit generated image channels** if they become large.
+
+If necessary, add them to `.gitignore`:
+
+```
+index_gray_images/
+label_polygon_images/
+gradient_images/
+```
+
+Generated outputs can always be **recreated using `channel_creator.py`**.
