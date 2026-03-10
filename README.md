@@ -147,11 +147,6 @@ python train_yolo.py
 
 ## YOLO Training
 
-### Move Data
-Copy processed dataset to training directory:
-- Google Drive: https://drive.google.com/drive/folders/1w1j9_Zf_ZMcJTtCCYLx2jFmCjrDw_Qdr
-- Workstation downstairs (recommended for GPU)
-
 ### Install
 ```powershell
 pip install ultralytics torch torchvision
@@ -167,3 +162,53 @@ python -c "import torch; print(torch.cuda.is_available())"
 2. Run: `python train_yolo.py`
 
 Use GPU workstation for full training (300 epochs).
+
+---
+## Multi-Channel YOLO Training (4-Channel Input)
+
+Trains YOLO11s with 4-channel input: [primary slice, i+1, i+2, index-gray]
+
+### Overview
+- **Model**: Modified YOLO11s with 4 input channels instead of 3
+- **Data**: 4-channel TIFFs combining sequential slices + slice index
+- **Channels**: [slice i, slice i+1, slice i+2, slice number as grayscale]
+
+#### 1. Install Dependencies
+```powershell
+pip install ultralytics torch pillow numpy opencv-python tqdm
+```
+#### 2. Generate Multi-Channel TIFFs
+```bash
+python combine_channels.py
+```
+Creates 4-channel TIFFs in:
+- `data/datasets/datasets/my_yolo_dataset/multichannel/`
+
+#### 3. Initiate 4 channel model
+```bash
+python create_4_channel_model.py
+```
+
+#### 4. Train Model
+```bash
+python train_multichannel.py
+```
+
+Adjust training settings in python script (epochs etc.)
+
+### Dataset Selection
+Edit `train_multichannel.py` line 14 to choose dataset:
+
+```python
+# my_yolo_dataset (571 images)
+data="data/datasets/datasets/my_yolo_dataset/data_multichannel.yaml"
+```
+
+### Output
+Trained model saved to: `data/runs/detect/<name>/weights/best.pt`
+
+### Files
+- `combine_channels.py` - Creates 4-channel TIFFs from PNG slices
+- `create_4channel_model.py` - Creates 4-channel YOLO11s model from pretrained weights
+- `yolo11s_4ch.pt` - Pretrained 4-channel model weights
+- `train_multichannel.py` - Training script
