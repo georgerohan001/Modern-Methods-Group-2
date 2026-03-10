@@ -478,9 +478,6 @@ Check that:
 
 - The dataset `path` is correct.
 - The `train` and `val` paths point to the correct folders.
-- The class order matches:
-
-```
 
 ---
 
