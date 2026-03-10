@@ -112,6 +112,37 @@ channel2/
 channel3/
 ```
 
+## Updated: Multi-Channel TIFF Creation
+
+Creates 4-channel TIFF files for YOLO11 multi-channel training.
+### Requirements
+```powershell
+pip install numpy pillow tqdm
+```
+
+Usage
+1. Ensure images are in data/datasets/datasets/tree_0638/images/train/ or you wanted location
+2. Run:
+python combine_channels.py
+Output
+- Location: data/datasets/datasets/tree_0638/multichannel/ -> change for different dataset
+- Format: 4-channel TIFF (channels, height, width)
+- Channels:
+  - Ch 0: Primary slice
+  - Ch 1: Slice i+1
+  - Ch 2: Slice i+2
+  - Ch 3: Index-gray (slice number as grayscale)
+Training with Multi-Channel
+Update data.yaml:
+path: tree_0638
+train: multichannel
+val: multichannel
+nc: 4
+names: [twigs, trunk, branch, grass]
+channels: 4
+Then train:
+python train_yolo.py
+
 ---
 
 ## YOLO Training
