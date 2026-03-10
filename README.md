@@ -440,3 +440,98 @@ channel1/
 channel2/
 channel3/
 ```
+
+---
+
+
+# 🤖 7️⃣ Moving Data to the Training Environment & Running YOLO
+
+After generating the final folders (`annotations/`, `channel1/`, `channel2/`, `channel3/`) using `channel_creator.py`, the data must be moved to the **main training directory**.
+
+You can find the training directory either:
+
+- 🌐 **Google Drive (Shared Folder)**  
+  https://drive.google.com/drive/folders/1w1j9_Zf_ZMcJTtCCYLx2jFmCjrDw_Qdr  
+
+- 🖥️ **Workstation downstairs** (recommended for GPU training)
+
+---
+
+## 📁 1️⃣ Move the Processed Data
+
+Copy your processed dataset into the main training directory.
+
+Make sure:
+
+- Image files are placed in the correct `images/` subfolders.
+- Annotation `.txt` files are placed in the corresponding `labels/` subfolders.
+- Filenames of images and labels match exactly.
+- The train/validation split remains consistent.
+
+---
+
+## 📝 2️⃣ Verify the `data.yaml` File
+
+Before training, open the `data.yaml` file in the training directory.
+
+Check that:
+
+- The dataset `path` is correct.
+- The `train` and `val` paths point to the correct folders.
+- The class order matches:
+
+```
+
+---
+
+## 🔧 3️⃣ Install Required Python Packages
+
+On the workstation (or your local GPU machine), install:
+
+```powershell
+pip install ultralytics torch torchvision
+```
+
+Optional but recommended:
+
+```powershell
+pip install matplotlib pandas seaborn
+```
+
+To verify GPU availability:
+
+```powershell
+python -c "import torch; print(torch.cuda.is_available())"
+```
+
+---
+
+## ⚙️ 4️⃣ Adjust the Training Script
+
+The file `train_yolo.py` is available in the training directory.
+
+Before running it:
+
+1. Open `train_yolo.py`
+2. Locate the section where the working directory (`dataset_path`) is defined
+3. Update it so it points to the correct dataset location on your machine
+
+Example:
+
+```python
+dataset_path = r"C:\Path\To\datasets"
+```
+
+Save the file after editing.
+
+---
+
+## 🚀 5️⃣ Start Training
+
+From the training directory, run:
+
+```powershell
+python train_yolo.py
+```
+
+For full training (300 epochs), use the **GPU workstation downstairs** whenever possible.
