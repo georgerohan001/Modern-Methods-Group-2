@@ -346,215 +346,97 @@ This will display the tree with colored structural labels.
 
 ---
 
-# 🎯 Channel Creator (Multi-Channel Training Image Generator)
+## 📂 6️⃣ Exporting from CVAT & Running the **Channel‑Creator** Pipeline  
 
-The script **`channel_creator.py`** generates multiple grayscale training channels from the labeled slice images.
+From now on the only information we need from CVAT is the **YOLO‑1.1 annotation format**.  
+All other image‑channel generation (index, label‑mask, trunk‑gradient) is handled by the
+`channel_creator.py` script you just updated.
 
-It replaces several older scripts by producing **all training channels in a single pipeline**.
+### Export the annotated slices from CVAT  
 
-The script reads **YOLO bounding box annotations** exported from CVAT and creates three derived images for each slice:
+1. Open the finished task in **CVAT**.  
+2. Click **`Menu → Export Task Dataset`**.  
+3. In the **Export Format** drop‑down choose **`YOLO for images 1.1`**.  
+4. Press **`Export`** → a **`.zip`** file will be downloaded.  
 
-1. **Index Channel** – encodes slice order
-2. **Label Mask Channel** – encodes object classes
-3. **Trunk Gradient Channel** – distance heatmap from trunks
+> **Why YOLO‑1.1?**  
+> This format stores one `.txt` file per image, each line containing  
+> `class_id cx cy w h` (all values normalised to the image size), which is exactly
+> what our script expects.
 
-These channels are useful for **machine learning models that benefit from additional spatial context**.
+### Unzip the export and check the folder layout  
 
----
+```text
+my_cvat_export/
+│
+├── obj.names                # class list (e.g. twigs, trunk, branch, grass)
+├── train.txt                # list of image file names (optional – can be empty)
+│
+└── obj_train_data/
+    ├── slice_000.png
+    ├── slice_000.txt
+    ├── slice_001.png
+    ├── slice_001.txt
+    └── … (one .png + one .txt per slice)
+```
 
-## 1. Prerequisites
+If the archive contains an extra top‑level folder, move its contents so that the
+structure above is **directly inside** `my_cvat_export/`.
 
-Install the required libraries:
+### Install the (only) required Python packages  
 
 ```powershell
-pip install pillow numpy
+pip install --upgrade pillow numpy
 ```
 
----
+> The script uses **Pillow** for image I/O and **NumPy** for the index‑gray channel.
 
-## 2. Required Dataset Structure
-
-Your dataset must follow this structure:
-
-```
-YOLO_Extraction_1/
-│
-├── obj.names
-├── obj.data
-├── train.txt
-│
-├── obj_train_data/
-│   ├── slice_000.png
-│   ├── slice_000.txt
-│   ├── slice_001.png
-│   └── slice_001.txt
-│
-└── channel_creator.py
-```
-
-### Explanation
-
-| File              | Purpose                          |
-| ----------------- | -------------------------------- |
-| `obj.names`       | Ordered list of class labels     |
-| `train.txt`       | List of training image paths     |
-| `obj_train_data/` | Images and YOLO annotation files |
-| `.txt` files      | Bounding boxes in YOLO format    |
-
-Example YOLO label:
-
-```
-1 0.77 0.27 0.04 0.05
-```
-
-Format:
-
-```
-[class_id center_x center_y width height]
-```
-
-Coordinates are **normalized (0–1)** relative to the image size.
-
----
-
-## 3. Output Channels
-
-Running the script creates **three output folders**.
-
-```
-YOLO_Extraction_1/
-│
-├── index_gray_images/
-├── label_polygon_images/
-└── gradient_images/
-```
-
-Each folder contains an image corresponding to every input slice.
-
----
-
-### Channel 1 — Index Channel
-
-Folder:
-
-```
-index_gray_images/
-```
-
-Each slice receives a grayscale value based on its **position in the dataset**.
-
-```
-first slice   → black
-last slice    → white
-```
-
-This gives neural networks **vertical positional information** about the tree.
-
----
-
-### Channel 2 — Label Mask Channel
-
-Folder:
-
-```
-label_polygon_images/
-```
-
-This channel converts bounding boxes into **grayscale masks representing object classes**.
-
-Example intensity mapping:
-
-```
-Trunk   → bright
-Branch  → medium gray
-Twig    → darker
-Grass   → darker
-```
-
-Each object appears as a **filled rectangle** corresponding to its YOLO bounding box.
-
----
-
-### Channel 3 — Trunk Gradient Channel
-
-Folder:
-
-```
-gradient_images/
-```
-
-This channel generates a **distance-based heatmap** from trunk locations.
-
-```
-White  → trunk center
-Gray   → near trunk
-Black  → far from trunk
-```
-
-The gradient fades based on the distance to the **nearest trunk bounding box**.
-
-This is useful for:
-
-* trunk localization
-* spatial loss weighting
-* machine learning supervision signals
-
----
-
-## 4. Running the Script
-
-Open `channel_creator.py` and set the base path:
-
-```python
-BASE_DIR = Path(r"C:\Users\...\YOLO_Extraction_1")
-```
-
-Then run:
+### Run the pipeline  
 
 ```powershell
-python channel_creator.py
+cd path\to\my_cvat_export
+python path\to\channel_creator.py
 ```
 
----
+The script will:
 
-## 5. Processing Pipeline
+| Action | Resulting folder | What you’ll find inside |
+|--------|------------------|--------------------------|
+| **Move** PNGs to `images/` and rename `obj_train_data/` → `annotations/` | `images/` & `annotations/` | Original slices (unchanged) and their YOLO `.txt` files. |
+| **Create** `channel1/` (delete last image of each group, renumber) | `channel1/` | First set of processed PNGs. |
+| **Create** `channel2/` (copy from `channel1/`, delete last again, renumber) | `channel2/` | Second set of processed PNGs. |
+| **Create** index‑gray images (one per slice) | `channel3/` | 8‑bit grayscale images whose pixel value encodes the slice order. |
+| **Validate / reorder** `obj.names` and fix all annotation files in `annotations/` | (in‑place) | Guarantees the class order `twigs → trunk → branch → grass`. |
 
-For each image slice the script:
-
-1. Reads the original slice image
-2. Loads the YOLO label file
-3. Extracts trunk bounding boxes
-4. Generates the three training channels
-5. Saves them to their output folders
-
-All channels maintain the **exact same resolution as the original slice**.
-
----
-
-## 6. Why Multi-Channel Training Helps
-
-Providing additional channels can improve model learning because it adds structured spatial information:
-
-| Channel    | Information            |
-| ---------- | ---------------------- |
-| Index      | Vertical tree position |
-| Label mask | Class location         |
-| Gradient   | Distance to trunk      |
-
-This creates a richer representation than using raw slices alone.
-
----
-
-## 7. Important Notes
-
-Do **not commit generated image channels** if they become large.
-
-If necessary, add them to `.gitignore`:
+When the script finishes you will have the three required folders:
 
 ```
-index_gray_images/
-label_polygon_images/
-gradient_images/
+my_cvat_export/
+│
+├─ images/            ← original PNGs (for reference)
+├─ annotations/      ← repaired YOLO .txt files
+├─ channel1/          ← first processed image set
+├─ channel2/          ← second processed image set
+└─ channel3/          ← index‑gray images (one per slice)
 ```
 
-Generated outputs can always be **recreated using `channel_creator.py`**.
+### What to commit (and what to ignore)  
+
+* **Commit**  
+  * `obj.names` (now guaranteed to be in the correct order)  
+  * `annotations/` (the corrected YOLO label files)  
+  * The **script** `channel_creator.py` (and any other helper scripts)  
+
+* **Do **_not_** commit**  
+  * All `*.png` files inside `images/`, `channel1/`, `channel2/`, `channel3/` – they can be regenerated any time.  
+  * The original raw point‑cloud or any other large binary assets.  
+
+Add the following lines to `.gitignore` (if they are not already present):
+
+```gitignore
+# CVAT export – large image folders
+images/
+channel1/
+channel2/
+channel3/
+```
