@@ -98,7 +98,7 @@ Generates three additional feature images from CVAT YOLO exports:
 - **Index-gray**: linear grayscale encoding of slice position
 - **Label mask**: filled bounding boxes rendered as grayscale levels per class (twigs=255, trunk=205, branch=155, grass=105)
 - **Gradient image**: distance-to-trunk gradient — brightness falls off with distance from trunk centre
-- Gradient: piecewise function: near trunk (r≤0.25): 255→127.5; far (r>0.25): 127.5→0
+- Gradient: piecewise function using normalised distance `r = min_dist / max_dist` (0–1): near trunk (r≤0.25): 255→127.5; far (r>0.25): 127.5→0
 
 ---
 
@@ -167,7 +167,7 @@ Generates three additional feature images from CVAT YOLO exports:
 
 **Training curve observations:**
 
-- Epochs 1–5: highly unstable — `val/cls_loss` shows `inf`/`nan` values (empty slices, very few foreground objects); model collapses briefly (precision/recall → 0)
+- Epochs 1–5: highly unstable — `val/cls_loss` shows `inf`/`nan` values (empty slices, very few foreground objects); precision/recall drop to 0 briefly
 - Epoch 13 onwards: stable training — val losses converge, metrics improve consistently
 - Losses (train & val) decrease monotonically from epoch ~13 to ~189
 - Precision reaches ~0.78 by epoch 189; recall lags behind at ~0.47 (model is conservative — misses detections but avoids false positives)
@@ -232,7 +232,7 @@ Generates three additional feature images from CVAT YOLO exports:
 - **Chosen approach**: bounding box detection (YOLO)
 - **Key problem with segmentation** in this domain:
   - Branches overlap heavily in cross-section, especially in the crown
-  - Overlapping segmentation masks create ambiguous labels — a single pixel can belong to multiple branches
+  - Overlapping semantic segmentation masks create ambiguous labels — a single pixel can belong to multiple branches (note: instance segmentation handles overlapping instances, but annotation effort is higher)
   - Detection boxes can overlap freely without label conflict
 - **Potential advantages of segmentation**:
   - More precise boundary delineation → better 3D backtranslation (tighter pixel-to-point mapping)
