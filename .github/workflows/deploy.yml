@@ -27,7 +27,6 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          # Points to the package-lock.json inside Documentation
           cache-dependency-path: Documentation/package-lock.json
 
       - name: Install dependencies
@@ -35,13 +34,13 @@ jobs:
         working-directory: ./Documentation
 
       - name: Build with VitePress
-        run: npm run docs:build
+        # Using npx avoids the "Permission Denied" sh error
+        run: npx vitepress build
         working-directory: ./Documentation
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # This must point to the 'dist' folder inside your subfolder
           path: Documentation/.vitepress/dist
 
   deploy:
