@@ -2,6 +2,9 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  // The 'base' must match your GitHub repository name exactly
+  base: '/Modern-Methods-Group-2/', 
+  
   title: "Modern Methods: Group 1",
   description: "Final paper: Forest surveying using TLS, UAVs, and YOLOv11 deep learning.",
   
@@ -38,9 +41,9 @@ export default defineConfig({
       }
     ],
 
-    // Update this link to your actual GitHub Repo later
+    // Updated to reflect your actual repository link
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/georg/Modern-Methods-Group-1' }
+      { icon: 'github', link: 'https://github.com/georg/Modern-Methods-Group-2' }
     ],
 
     footer: {
