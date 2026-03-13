@@ -5,13 +5,6 @@ hero:
   name: "Group 1: Forest Segmentation"
   text: "Deep Learning for Automated Tree Architecture Analysis"
   tagline: "Leveraging YOLOv11 for Z-Axis Slice Classification in TLS Point Clouds"
-  actions:
-    - theme: brand
-      text: View Workflow
-      link: /workflow/overview
-    - theme: alt
-      text: Methodology
-      link: /methodology/point-cloud-slicing
 
 features:
   - title: YOLOv11 Training
