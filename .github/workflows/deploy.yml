@@ -30,12 +30,13 @@ jobs:
           cache-dependency-path: Documentation/package-lock.json
 
       - name: Install dependencies
-        run: npm install
+        # 'npm ci' is better for CI/CD than 'npm install'
+        run: npm ci
         working-directory: ./Documentation
 
       - name: Build with VitePress
-        # Using npx avoids the "Permission Denied" sh error
-        run: npx vitepress build
+        # We manually trigger the build via the node executable to bypass shell permission issues
+        run: node ./node_modules/vitepress/bin/vitepress.js build
         working-directory: ./Documentation
 
       - name: Upload artifact
