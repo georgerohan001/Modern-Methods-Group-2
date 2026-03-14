@@ -1,49 +1,187 @@
-# 3. Preprocessing & Slicing Pipeline
+# 3. Preprocessing and Multi-Channel Slicing Pipeline
 
-The core of our methodology lies in the transformation of raw spatial coordinates into informative multi-channel feature maps. By engineering a 4-channel input, we provide the YOLOv11 model with the vertical and contextual cues necessary to distinguish complex forest structures.
+After generating the individual slice images described in the previous chapter, an additional preprocessing pipeline was implemented to prepare the data for training a YOLO-based object detection model. The goal of this stage was to enrich each slice with additional contextual information that helps the model interpret three-dimensional tree structures using two-dimensional images.
 
----
+Instead of using a standard RGB image representation, the dataset was transformed into a **four-channel image format**. These channels capture not only the current slice but also contextual information from neighboring slices and the vertical position within the tree.
 
-## 3.1 Multi-Channel Feature Engineering
-
-Unlike standard computer vision tasks that use Red, Green, and Blue channels, our pipeline utilizes a custom **4-channel architecture**. Each channel is designed to encode a specific spatial or contextual dimension of the tree's architecture.
-
-### Channel Composition
-
-The resulting input to the model is a **shape (H, W, 4)** tensor, exported as a 4-channel TIFF (RGBA mode) with `tiff_deflate` compression.
-
-| Channel | Name | Content Description |
-| --- | --- | --- |
-| **0** | **Primary Slice** | The point density raster of the current slice (i). |
-| **1** | **Previous Slice (i-1)** | The density raster of the slice directly below the current one. |
-| **2** | **Antecedent Slice (i-2)** | The density raster two levels below the current one. |
-| **3** | **Index-Gray** | An opacity gradient representing the relative height (%) of the slice within the total tree height. |
+The entire preprocessing pipeline was implemented using Python scripts available in the project repository.
 
 ---
 
-## 3.2 Spatial Logic & Vertical Context
+## 3.1 Concept of Multi-Channel Slice Representation
 
-The inclusion of channels 1, 2, and 3 is critical for overcoming the limitations of 2D detection in a 3D environment:
+A single horizontal slice of a tree provides only a limited view of the structure. For example, a circular cluster of points in one slice could represent:
 
-* **Vertical Correlation (Channels 1 & 2):** Tree structures like the trunk and primary branches are continuous. Because these features taper upward, providing the model with the "history" of the slices below allows it to better predict the current position and orientation of the stem.
-* **Absolute Position (Channel 3):** By encoding the height as a grayscale gradient (black at the base, white at the crown), we provide the model with a "global coordinate." This helps the network distinguish between a wide trunk base (near the ground) and a dense crown (near the top), which might otherwise look similar in a single isolated density slice.
+- the trunk,
+- a large branch,
+- or dense twig growth.
 
-> [!TIP] Handling Edge Cases
-> At the very bottom of the tree (where i=0 or i=1), there are no "neighboring" slices below. In these instances, channels 1 and 2 are filled with **zeros (black channels)** to maintain a consistent input shape without introducing noise.
+Without additional context, these structures may appear visually similar.
+
+To improve interpretability, each slice was therefore expanded into a **four-channel feature map** containing information from neighboring slices and the overall height of the tree.
+
+The resulting model input has the shape:
+
+```
+(H, W, 4)
+```
+
+where:
+
+- **H** = image height in pixels  
+- **W** = image width in pixels  
+- **4** = number of channels
+
+The four channels encode the following information:
+
+| Channel | Name | Description |
+|-------|------|-------------|
+| **0** | Primary Slice | Point density image of the current slice |
+| **1** | Previous Slice | Density image of the slice directly below |
+| **2** | Antecedent Slice | Density image two slices below |
+| **3** | Height Index | Grayscale representation of relative tree height |
+
+These channels together provide both **local spatial information** and **vertical context**, which helps the neural network recognize continuous structures such as trunks and branches.
 
 ---
 
-## 3.3 Normalization & Rasterization
+## 3.2 Creating the Channel Structure
 
-To ensure the model training is stable, the point density data undergoes the following transformations:
+The generation of the multi-channel dataset was performed using the Python script **`organize.py`**, which is included in the repository.
 
-1. **Density Mapping:** Points are binned into 1 cm pixels on the XY plane.
-2. **Outlier Clipping:** Values are clipped at the 99th percentile to prevent high-intensity "hotspots" (areas with extreme point density) from washing out the structural details of thinner branches.
-3. **8-bit Scaling:** The resulting values are mapped to a **0–255 (uint8)** range.
-4. **Spatial Consistency:** All slices within a single tree are processed using the same global bounding box, ensuring that a trunk at coordinates (x, y) in Slice 10 is in the exact same pixel location in Slice 11.
+The script operates on the PNG slice images produced by the slicing pipeline described in Chapter 2. These images initially represent only the **current slice** of the tree. The script reorganizes and duplicates these images to construct the remaining channels.
+
+### Channel 0: Primary Slice
+
+The original slice images generated by `slicer.py` are used directly as **Channel 0**. Each image represents the point density distribution for a specific vertical layer of the tree.
+
+The images are stored in the directory:
+
+```
+channel0/
+```
+
+Each file follows the naming structure:
+
+```
+TreeName_slice_###.png
+```
+
+where the numeric suffix represents the slice index.
 
 ---
 
-### Implementation Note
+### Channel 1: Previous Slice
 
-For the final segmentation, these 4-channel images are passed through the YOLOv11s inference engine. The detected bounding boxes are then "re-projected" back into the original 3D coordinate space by mapping the 2D pixel coordinates back to the Z interval of the specific slice.
+Channel 1 represents the slice directly **below** the current slice.
+
+To construct this channel, the script copies all images from `channel0` into a new folder (`channel1`) and **shifts their indices upward by one position**. As a result:
+
+- slice *i* in channel 0 corresponds to slice *i−1* in channel 1.
+
+The last slice of each tree sequence is removed because no higher slice exists to pair with it.
+
+This shifting process creates a consistent mapping between the primary slice and its immediate predecessor.
+
+---
+
+### Channel 2: Antecedent Slice
+
+Channel 2 contains the slice located **two layers below** the current slice.
+
+The same shifting procedure used for Channel 1 is applied again, this time using the images in `channel1` as the input. This produces a second set of images that represent the slice two levels below the primary slice.
+
+These images are stored in:
+
+```
+channel2/
+```
+
+The result is a vertical history of the tree structure across three consecutive layers.
+
+---
+
+### Channel 3: Relative Height Gradient
+
+While the previous channels provide **local vertical context**, the model still has no information about the **absolute position within the tree**.
+
+To address this, Channel 3 encodes the **relative height of the slice within the tree**.
+
+This channel is generated by the function `build_channel3_gradient()` in `organize.py`. For each slice sequence belonging to a tree:
+
+1. The total number of slices is determined.
+2. A grayscale value between **0 and 255** is assigned based on the slice index.
+3. A uniform image with that grayscale value is generated.
+
+The gradient therefore ranges from:
+
+- **black (0)** at the base of the tree  
+- **white (255)** at the top of the tree
+
+This information helps the model differentiate between structures that may appear similar in isolation but typically occur at different heights, such as trunk bases versus canopy branches.
+
+---
+
+## 3.3 Combining Channels into Multi-Channel Images
+
+Once the four channel folders were created, the images were merged into a single multi-channel dataset using the Python script **`combine_channels.py`**.
+
+This script reads the grayscale images from:
+
+```
+channel0/
+channel1/
+channel2/
+channel3/
+```
+
+and stacks them into a four-dimensional array using the following order:
+
+```
+[R, G, B, A]
+```
+
+where:
+
+- **R** = primary slice  
+- **G** = previous slice  
+- **B** = antecedent slice  
+- **A** = height index
+
+Although the channels are mapped to the conventional RGBA order, they do **not represent color information**. Instead, each channel contains a different structural feature derived from the point cloud.
+
+The images are saved as **4-channel TIFF files** with the following properties:
+
+- **8-bit per channel**
+- **RGBA format**
+- **TIFF Deflate compression**
+
+The final dataset is stored in the folder:
+
+```
+multichannel_tifs/
+```
+
+Each file retains the original slice name so that it can be traced back to the corresponding tree and vertical layer.
+
+---
+
+## 3.4 Benefits of the Multi-Channel Representation
+
+The resulting dataset provides the neural network with significantly more information than a single 2D slice would contain.
+
+Specifically, the design supports three important cues:
+
+**1. Structural Continuity**
+
+Tree components such as trunks and branches form continuous structures. Including slices from lower layers allows the model to detect patterns that extend vertically through the tree.
+
+**2. Shape Evolution**
+
+Branches often taper or curve as they rise through the canopy. Observing multiple slices allows the model to recognize these gradual changes.
+
+**3. Absolute Vertical Position**
+
+By encoding the relative height of each slice, the network can distinguish between structural elements that tend to occur at specific heights within the tree.
+
+Together, these features help the model interpret complex forest structures using only two-dimensional images derived from the original three-dimensional point cloud.
