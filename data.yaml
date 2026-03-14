@@ -1,0 +1,21 @@
+# -----------------------------------------------------------------
+# YOLO‑v11 dataset configuration – 5‑channel input (voxel‑style)
+# -----------------------------------------------------------------
+# `path` is *relative* to the location of THIS yaml file.
+path: my_yolo_dataset                     # folder that contains images/ and labels/
+
+# Primary images that have matching label files.
+train: images/train                   # ← the “i” slice (channel0)
+val:   images/val                   # ← you can keep the same for now (or point to a separate val folder later)
+
+# -------------------------------------------------
+# CLASS INFORMATION
+# -------------------------------------------------
+nc: 4                                     # number of classes
+names:
+  - twigs      # 0
+  - trunk     # 1
+  - branch    # 2
+  - grass     # 3
+
+channels: 4

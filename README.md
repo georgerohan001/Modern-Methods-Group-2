@@ -1,214 +1,495 @@
 # Modern Methods with TLS and UAV – Group 1
 
-## Git Workflow
+This repository contains the scripts used to train and apply a multi-channel YOLO model for tree component detection from terrestrial laser scanning (TLS) data.
 
-### Initial Setup
-```powershell
-git clone https://github.com/georgerohan001/Modern-Methods-Group-2.git
-```
+The workflow converts 3D point clouds into 2D slices, trains a detection model on annotated slices, and projects predictions back into 3D point clouds.
 
-### Daily Workflow
-```powershell
-git pull origin main          # Sync before starting
-# Make your changes
-git add .                     # Stage all changes
-git commit -m "Description"  # Commit with message
-git push origin main          # Upload to remote
-```
+A detailed explanation of the methods can be found in the project [report](https://georgerohan001.github.io/Modern-Methods-Group-2/motivation.html):
 
-### Rules
-- **Pull before push** – prevents merge conflicts
-- **Small commits** – easier debugging and collaboration
-- **No large files** – keep `.las`, `.tif` >50MB in shared cloud, not Git
+This README only explains **how to reproduce the workflow using the scripts provided**.
 
 ---
 
-## Point Cloud Slicing Tool
+# 1. Clone the Repository
 
-Converts `.las` point clouds into 2D PNG slices for tree structure analysis.
+Clone the repository to your machine.
 
-### Setup
-```powershell
+```bash
+git clone https://github.com/georgerohan001/Modern-Methods-Group-2.git
+cd Modern-Methods-Group-2
+```
+
+---
+
+# 2. Obtain a Point Cloud
+
+You may use the same dataset used in this project.
+
+Download example TLS data:
+
+[https://bwsyncandshare.kit.edu/public.php/dav/files/79nqaSBT2Y6tkYH/2026-03-02_Mathisleweiher.laz](https://bwsyncandshare.kit.edu/public.php/dav/files/79nqaSBT2Y6tkYH/2026-03-02_Mathisleweiher.laz)
+
+Convert it to `.las` if necessary.
+
+---
+
+# 3. Segment Individual Trees
+
+Script: `Segmentor.R`
+
+This script segments individual trees from a TLS forest scan and exports **one LAS file per tree**.
+
+## Install Dependencies
+
+Open R and install the required packages:
+
+```r
+install.packages(c("lidR", "terra", "CspStandSegmentation"))
+```
+
+Load them:
+
+```r
+library(lidR)
+library(terra)
+library(CspStandSegmentation)
+```
+
+## Edit the Script
+
+Modify the following variables:
+
+```
+src_las   <- "group_321_GP.las"
+out_dir   <- "segmented_trees"
+```
+
+* `src_las` → path to your TLS point cloud
+* `out_dir` → folder where segmented trees will be saved
+
+## Run
+
+Run the script in R:
+
+```
+source("Segmentor.R")
+```
+
+The output folder will contain files such as:
+
+```
+Tree_001.las
+Tree_002.las
+Tree_003.las
+```
+
+Each file contains one segmented tree.
+
+---
+
+# 4. Convert Trees to 2D Slices
+
+Script: `slicer.py`
+
+This script converts each tree LAS file into **horizontal 2D slices**.
+
+Each slice is saved as a PNG image.
+
+## Install Dependencies
+
+```bash
 pip install laspy numpy opencv-python
 ```
 
-### Usage
-1. Place script with `.las` file
-2. Update `FILE_NAME` in script
-3. Run: `python slicer.py`
+## Edit the Script
 
-### Output
-- `tree_slices/[tree_name]/` – PNG slices (20cm thickness default)
-- `metadata.json` – X, Y, Z coordinates and pixel resolution for 3D reconstruction
+Modify the input folder:
+
+```
+INPUT_DIRECTORY = "path_to_folder_with_tree_las_files"
+```
+
+This should point to the directory created by `Segmentor.R`.
+
+## Run
+
+```
+python slicer.py
+```
+
+## Output
+
+```
+tree_slices/
+ ├─ tree_name_slice_000.png
+ ├─ tree_name_slice_001.png
+ ├─ tree_name_slice_002.png
+ └─ metadata.json
+```
+
+The metadata file stores coordinate information used later for 3D reconstruction.
 
 ---
 
-## 3D Reconstruction (CVAT → Point Cloud)
+# 5. Annotate the Slices
 
-Project CVAT annotations back onto original 3D point cloud.
+Upload the generated PNG slices to **CVAT** for annotation.
 
-### Prerequisites
-```r
-install.packages(c("lidR", "xml2", "jsonlite", "data.table"))
+Recommended export format:
+
+```
+YOLO for images 1.1
 ```
 
-### Export from CVAT
-`Menu → Export Task Dataset → CVAT for images 1.1`
+Create bounding boxes for the following classes:
 
-### Run Aggregator
-```r
-# Edit tree_aggregate.R:
-las_file      <- "your_original_file.las"
-xml_file      <- "path/to/annotations.xml"
-metadata_file <- "path/to/metadata.json"
-output_file   <- "annotated_tree.las"
 ```
-```powershell
-Rscript tree_aggregate.R
+0 → twigs
+1 → trunk
+2 → branch
+3 → grass
 ```
-
-### Classification Mapping
-```
-1 → Trunk | 2 → Branch | 3 → Twigs | 4 → Grass
-```
-
-View in CloudCompare: `Scalar Field → Classification`
 
 ---
 
-## Channel-Creator Pipeline
+# 6. Create Additional Image Channels
 
-Generates multi-channel training data from CVAT exports.
+Script: `organize.py`
 
-### Export from CVAT
-`Menu → Export Task Dataset → YOLO for images 1.1`
+This script builds three additional image channels from the original slices.
 
-### Install
-```powershell
-pip install --upgrade pillow numpy
+These channels provide contextual information for the model.
+
+## Install Dependencies
+
+```bash
+pip install pillow numpy
 ```
 
-### Run
-```powershell
-cd path\to\cvat_export
-python path\to\channel_creator.py
+## Required Folder Structure
+
+Create a base folder containing:
+
+```
+channel0
+channel1
+channel2
+channel3
 ```
 
-### Output Structure
+Place the **original slice PNG files** in:
+
 ```
-cvat_export/
-├── images/        # Original PNGs
-├── annotations/   # YOLO .txt files (class order: twigs, trunk, branch, grass)
-├── channel1/      # Processed set 1
-├── channel2/      # Processed set 2
-└── channel3/      # Index-gray images
+channel0
 ```
 
-### Gitignore
-```gitignore
-images/
-channel1/
-channel2/
-channel3/
+## Edit the Script
+
+Modify the base path:
+
+```
+BASE_DIR = "path_to_channel_directory"
 ```
 
-## Updated: Multi-Channel TIFF Creation
+## Run
 
-Creates 4-channel TIFF files for YOLO11 multi-channel training.
-### Requirements
-```powershell
-pip install numpy pillow tqdm
+```
+python organize.py
 ```
 
-Usage
-1. Ensure images are in data/datasets/datasets/tree_0638/images/train/ or you wanted location
-2. Run:
+## Output
+
+The script will generate:
+
+```
+channel0 → original slices
+channel1 → shifted slices
+channel2 → shifted slices
+channel3 → index-gradient channel
+```
+
+---
+
+# 7. Combine Channels into Multi-Channel Images
+
+Script: `combine_channels.py`
+
+This script stacks the four grayscale channels into **4-channel TIFF images**.
+
+## Install Dependencies
+
+```bash
+pip install pillow numpy tqdm
+```
+
+## Edit the Script
+
+Modify:
+
+```
+BASE_DIR = "path_to_channel_directory"
+```
+
+## Run
+
+```
 python combine_channels.py
-Output
-- Location: data/datasets/datasets/tree_0638/multichannel/ -> change for different dataset
-- Format: 4-channel TIFF (channels, height, width)
-- Channels:
-  - Ch 0: Primary slice
-  - Ch 1: Slice i+1
-  - Ch 2: Slice i+2
-  - Ch 3: Index-gray (slice number as grayscale)
-Training with Multi-Channel
-Update data.yaml:
-path: tree_0638
-train: multichannel
-val: multichannel
-nc: 4
-names: [twigs, trunk, branch, grass]
-channels: 4
-Then train:
-python train_yolo.py
+```
+
+## Output
+
+```
+multichannel_tifs/
+   tree_slice_000.tif
+   tree_slice_001.tif
+   tree_slice_002.tif
+```
+
+These TIFF files contain the four channels used for training.
 
 ---
 
-## YOLO Training
+# 8. Create a 4-Channel YOLO Checkpoint
 
-### Install
-```powershell
+Script: `make_4ch_checkpoint.py`
+
+The default YOLO model accepts **3 channels (RGB)**.
+
+This script modifies the pretrained weights so the model accepts **4 channels**.
+
+## Install Dependencies
+
+```bash
+pip install torch
+```
+
+## Edit the Script
+
+Update the two paths:
+
+```
+PRE = "path_to_original_yolo11s.pt"
+OUT = "path_to_output_4ch_checkpoint.pt"
+```
+
+## Run
+
+```
+python make_4ch_checkpoint.py
+```
+
+The output file will be used during training.
+
+---
+
+# 9. Configure the Dataset
+
+Files:
+
+```
+data.yaml
+yolo11.yaml
+```
+
+## data.yaml
+
+Update the dataset paths.
+
+Example structure:
+
+```
+dataset/
+ ├─ images/
+ │   ├─ train
+ │   └─ val
+ └─ labels/
+     ├─ train
+     └─ val
+```
+
+Ensure the following parameters exist:
+
+```
+nc: 4
+channels: 4
+```
+
+## yolo11.yaml
+
+This model configuration defines the YOLO architecture.
+
+Ensure:
+
+```
+channels: 4
+```
+
+---
+
+# 10. Train the Model
+
+Script: `train_4ch_detection.py`
+
+This script trains the multi-channel YOLO model.
+
+## Install Dependencies
+
+```bash
 pip install ultralytics torch torchvision
 ```
 
-### Verify GPU
-```powershell
-python -c "import torch; print(torch.cuda.is_available())"
+## Edit the Script
+
+Update the paths:
+
+```
+CUSTOM_YAML = "path_to_yolo11.yaml"
+DATA_YAML   = "path_to_data.yaml"
 ```
 
-### Train
-1. Update `dataset_path` in `train_yolo.py`
-2. Run: `python train_yolo.py`
+## Run
 
-Use GPU workstation for full training (300 epochs).
+```
+python train_4ch_detection.py
+```
+
+Training output will be stored in:
+
+```
+runs/detect/train/
+```
+
+The trained weights will be saved as:
+
+```
+best.pt
+```
 
 ---
-## Multi-Channel YOLO Training (4-Channel Input)
 
-Trains YOLO11s with 4-channel input: [primary slice, i+1, i+2, index-gray]
+# 11. Run Predictions
 
-### Overview
-- **Model**: Modified YOLO11s with 4 input channels instead of 3
-- **Data**: 4-channel TIFFs combining sequential slices + slice index
-- **Channels**: [slice i, slice i+1, slice i+2, slice number as grayscale]
+Script: `predict_on_train.py`
 
-#### 1. Install Dependencies
-```powershell
-pip install ultralytics torch pillow numpy opencv-python tqdm
+This script runs the trained model on image slices.
+
+## Edit the Script
+
+Update:
+
 ```
-#### 2. Generate Multi-Channel TIFFs
+MODEL_PATH
+SOURCE_DIR
+```
+
+* `MODEL_PATH` → trained `best.pt`
+* `SOURCE_DIR` → folder containing test images
+
+## Run
+
+```
+python predict_on_train.py
+```
+
+The script will generate predicted bounding boxes and YOLO label files.
+
+---
+
+# 12. Project Predictions Back to 3D
+
+Script: `aggregate.py`
+
+This script converts the 2D detections back into **3D point cloud classifications**.
+
+## Install Dependencies
+
 ```bash
-python combine_channels.py
-```
-Creates 4-channel TIFFs in:
-- `data/datasets/datasets/my_yolo_dataset/multichannel/`
-
-#### 3. Initiate 4 channel model
-```bash
-python create_4_channel_model.py
+pip install laspy numpy
 ```
 
-#### 4. Train Model
-```bash
-python train_multichannel.py
+## Edit the Script
+
+Modify:
+
+```
+LAS_FILE
+XML_FILE
+METADATA_FILE
+OUTPUT_FILE
 ```
 
-Adjust training settings in python script (epochs etc.)
+These should correspond to:
 
-### Dataset Selection
-Edit `train_multichannel.py` line 14 to choose dataset:
+* the original point cloud
+* CVAT annotations
+* slicer metadata
+* output LAS file
 
-```python
-# my_yolo_dataset (571 images)
-data="data/datasets/datasets/my_yolo_dataset/data_multichannel.yaml"
+## Run
+
+```
+python aggregate.py
 ```
 
-### Output
-Trained model saved to: `data/runs/detect/<name>/weights/best.pt`
+The resulting LAS file contains classified points that can be visualized in CloudCompare.
 
-### Files
-- `combine_channels.py` - Creates 4-channel TIFFs from PNG slices
-- `create_4channel_model.py` - Creates 4-channel YOLO11s model from pretrained weights
-- `yolo11s_4ch.pt` - Pretrained 4-channel model weights
-- `train_multichannel.py` - Training script
+---
+
+# 13. Running the Complete Workflow Automatically
+
+If you do not want to run each step separately, the repository also includes `run.py`.
+
+This script combines most of the processing steps into a single pipeline.
+
+## Folder Structure
+
+Inside the `Workflow` folder:
+
+```
+Workflow
+ ├─ INPUT
+ ├─ OUTPUT
+ ├─ Images
+ ├─ Channels
+ ├─ Labels
+ ├─ COMPLETED
+ └─ Model
+```
+
+Place your trained model in:
+
+```
+Workflow/Model/best.pt
+```
+
+Place LAS files to process in:
+
+```
+Workflow/INPUT
+```
+
+## Run
+
+```
+python run.py
+```
+
+The script will:
+
+1. Slice the point cloud
+2. Generate image channels
+3. create multi-channel images
+4. run YOLO predictions
+5. project detections back into 3D
+
+The final annotated LAS files will appear in:
+
+```
+Workflow/OUTPUT
+```
+
+---
+
+If you need methodological details, refer to the project report:
+
+[https://georgerohan001.github.io/Modern-Methods-Group-2/motivation.html](https://georgerohan001.github.io/Modern-Methods-Group-2/motivation.html)
