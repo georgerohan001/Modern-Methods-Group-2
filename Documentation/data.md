@@ -6,7 +6,7 @@ The overall process converts three dimensional point cloud data into structured 
 
 ---
 
-# 3.1 Data Acquisition
+## 3.1 Data Acquisition
 
 The point cloud data used in this project was collected during a field excursion as part of the master's module **“Modern methods of forest and environmental surveying using terrestrial laser scanning and UAVs”**, taught by **Julian Frey**.
 
@@ -22,7 +22,7 @@ This dataset served as the starting point for the workflow described in this pro
 
 ---
 
-# 3.2 Stand-Level Tree Segmentation
+## 3.2 Stand-Level Tree Segmentation
 
 The TLS scan contained the entire forest stand in a single point cloud. For the purposes of training a model to recognize structural components of trees, individual trees needed to be isolated from this dataset.
 
@@ -34,7 +34,7 @@ Although this solved the segmentation problem, the resulting file was still extr
 
 ---
 
-# 3.3 Splitting the Segmented Dataset
+## 3.3 Splitting the Segmented Dataset
 
 When attempting to load the segmented dataset in **CloudCompare**, the software frequently froze or crashed due to the size of the file.
 
@@ -68,7 +68,7 @@ The script itself is available in the project repository under the filename **`S
 
 ---
 
-# 3.4 Manual Inspection and Tree Selection
+## 3.4 Manual Inspection and Tree Selection
 
 Once the trees had been separated into individual files, they were inspected in **CloudCompare**.
 
@@ -80,7 +80,7 @@ These cleaned tree point clouds served as the input for the slicing pipeline.
 
 ---
 
-# 3.5 Vertical Slicing of Trees
+## 3.5 Vertical Slicing of Trees
 
 To convert the 3D tree point clouds into a form suitable for computer vision models, the trees were sliced horizontally into thin layers.
 
@@ -120,7 +120,7 @@ This naming convention allows the slice index and source tree to be easily ident
 
 ---
 
-# 3.6 Metadata Generation
+## 3.6 Metadata Generation
 
 During slicing, the script also generates a **metadata file** (`metadata.json`) that stores spatial information for every exported slice.
 
@@ -136,7 +136,7 @@ This information is important because it allows detections made on the images to
 
 ---
 
-# 3.7 Annotation of Tree Components
+## 3.7 Annotation of Tree Components
 
 Once the slice images were generated, they were imported into the annotation platform **CVAT**.
 
@@ -155,7 +155,7 @@ Although this step was time intensive, it produced a labelled dataset that links
 
 ---
 
-# 3.8 Export to YOLO Dataset Format
+## 3.8 Export to YOLO Dataset Format
 
 After annotation was completed, the dataset was exported from CVAT in **YOLO 1.1 format**.
 
