@@ -1,4 +1,3 @@
-```markdown
 # 5. Training Process
 
 This chapter describes how the adapted YOLO11 model was fine-tuned on the prepared dataset. Training was performed using the **Ultralytics** training engine, which handles the optimization loop, metric tracking, and validation routines. Custom scripts in the project repository were used to launch the training and verify that the modified model correctly accepted the four-channel input tensors.
@@ -86,4 +85,4 @@ These predictions serve as the input for the later post-processing stage, where 
 
 > [!TIP] Why Export YOLO Labels  
 > Saving predictions in YOLO format makes it straightforward to reuse the results for downstream processing, evaluation, or reprojection into the 3D coordinate system.
-```
+
