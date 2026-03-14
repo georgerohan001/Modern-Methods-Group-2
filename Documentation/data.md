@@ -1,180 +1,170 @@
-# 3. Preprocessing and Slicing Pipeline
+# 2. Data Acquisition and Preparation
 
-This chapter documents the workflow used to transform raw terrestrial laser scanning (TLS) data into the image-based dataset used for model training. The aim of this section is both to explain the reasoning behind the processing steps and to allow the workflow to be reproduced by other researchers.
+This chapter describes the complete workflow used to transform raw terrestrial laser scanning (TLS) data into a labeled image dataset suitable for training a YOLO-based object detection model. The process consists of four main stages: field data acquisition, tree segmentation, preparation of individual tree point clouds, and the conversion of three-dimensional data into two-dimensional raster images suitable for annotation.
 
-The overall process converts three dimensional point cloud data into structured two dimensional slices that preserve vertical context. These slices are later annotated and used as input for the detection model.
-
----
-
-## 3.1 Data Acquisition
-
-The point cloud data used in this project was collected during a field excursion as part of the master's module **“Modern methods of forest and environmental surveying using terrestrial laser scanning and UAVs”**, taught by **Julian Frey**.
-
-The excursion took place on **2 March 2026** in the **Mathislewald forest near Freiburg, Germany**. The approximate coordinates of the study location are:
-
-- **Latitude:** 47.88539° N  
-- **Longitude:** 8.08564° E  
-- **Coordinate Reference System:** WGS84 (EPSG:4326)
-
-During the excursion, students were introduced to the operation of terrestrial laser scanning devices and UAV-based survey methods. As part of the exercise, a full TLS scan of a forest stand was recorded. The resulting stand-level point cloud dataset was later made available to the students for further analysis and experimentation.
-
-This dataset served as the starting point for the workflow described in this project.
+The steps described below are intended not only to document the workflow used in this project, but also to allow the process to be reproduced by other researchers.
 
 ---
 
-## 3.2 Stand-Level Tree Segmentation
+## 2.1 Field Data Acquisition
 
-The TLS scan contained the entire forest stand in a single point cloud. For the purposes of training a model to recognize structural components of trees, individual trees needed to be isolated from this dataset.
+The raw data used in this study were collected during a field excursion as part of the Master's module **“Modern methods of forest and environmental surveying using terrestrial laser scanning and UAVs”**, led by **Julian Frey** at the University of Freiburg.
 
-To avoid implementing a stand segmentation algorithm from scratch, the workflow provided by **3dtrees.earth** was used to perform the initial segmentation of trees from the full point cloud. This workflow applies automated tree detection and segmentation methods to separate the stand into individual trees.
+The field campaign took place on **2 March 2026** in the **Mathislewald**, located in the Black Forest near Freiburg, Germany. The approximate coordinates of the study site are:
 
-The output of this process was a large segmented point cloud in which each point contained an identifier indicating the tree to which it belonged.
+- **WGS84 (DMS):** 47°53'07.4"N, 8°05'08.3"E  
+- **WGS84 (Decimal):** 47.88539° N, 8.08564° E  
+- **Projected CRS:** UTM Zone 32N (EPSG:32632)
 
-Although this solved the segmentation problem, the resulting file was still extremely large and difficult to work with in interactive point cloud software.
+During the excursion, students were trained in the operation of both **terrestrial laser scanning (TLS)** systems and **UAV-based surveying platforms**. The TLS data collected during this exercise were subsequently made available to participants for use in individual analysis projects.
 
----
+The point clouds used in this work were captured using a **RIEGL VZ-400i terrestrial laser scanner**, a high-resolution TLS instrument capable of producing dense three-dimensional representations of forest stands.
 
-## 3.3 Splitting the Segmented Dataset
-
-When attempting to load the segmented dataset in **CloudCompare**, the software frequently froze or crashed due to the size of the file.
-
-To make the data manageable, a custom **R script named `Segmentor.R`** was written and executed. The purpose of this script was to separate the segmented point cloud into **one LAS file per tree**.
-
-The script performs the following steps:
-
-1. Load the stand-level TLS point cloud.
-2. Classify ground points using the CSF ground classification algorithm.
-3. Generate a Digital Terrain Model (DTM).
-4. Normalize point heights relative to the terrain.
-5. Compute geometric descriptors required by the segmentation algorithm.
-6. Detect candidate tree base locations.
-7. Perform CSP-COST tree segmentation.
-8. Assign a **TreeID** to each point.
-9. Split the dataset by TreeID.
-10. Export each tree into its own `.las` file.
-
-After running the script, the output directory contained many smaller LAS files named in the format:
-
-```
-Tree_001.las
-Tree_002.las
-Tree_003.las
-...
-```
-
-This step significantly improved usability. Instead of loading the entire forest stand at once, it became possible to load **20 to 50 trees simultaneously** in CloudCompare while still retaining a visual sense of the surrounding stand.
-
-The script itself is available in the project repository under the filename **`Segmentor.R`**.
+The scanned stand consists of a **mixed coniferous forest**, predominantly composed of *Picea abies* (Norway spruce), along with smaller understory vegetation.
 
 ---
 
-## 3.4 Manual Inspection and Tree Selection
+## 2.2 Tree Segmentation from the Stand Point Cloud
 
-Once the trees had been separated into individual files, they were inspected in **CloudCompare**.
+The TLS scans initially represent the entire forest stand as a single large point cloud. For the purposes of this project, however, individual trees were required as separate datasets.
 
-Automated segmentation is rarely perfect. Some trees were split incorrectly, while others contained points from neighbouring trees or understory vegetation.
+To obtain these, the stand-level point cloud was processed using the segmentation workflow provided by **3dtrees.earth**. This platform implements automated tree segmentation methods designed for terrestrial laser scanning data and allows individual trees to be extracted from a larger forest scan.
 
-Each member of the group therefore selected **two to three trees** that required the least amount of correction. Minor segmentation issues were manually cleaned by removing stray points so that each point cloud represented **a single, coherent tree**.
+Using this workflow allowed the project to focus on later processing stages rather than developing a custom tree segmentation pipeline from scratch.
 
-These cleaned tree point clouds served as the input for the slicing pipeline.
-
----
-
-## 3.5 Vertical Slicing of Trees
-
-To convert the 3D tree point clouds into a form suitable for computer vision models, the trees were sliced horizontally into thin layers.
-
-This step was implemented using a Python script named **`slicer.py`**, which is also available in the project repository.
-
-The script performs the following operations for each tree:
-
-1. Load the `.las` point cloud.
-2. Determine the global bounding box of the tree in the XY plane.
-3. Determine the vertical extent of the tree.
-4. Divide the tree into horizontal slices with a fixed thickness.
-
-The parameters used in this project were:
-
-| Parameter | Value | Description |
-|---|---|---|
-| Slice height | 0.20 m | Vertical thickness of each slice |
-| Pixel size | 0.01 m | Raster resolution in the XY plane |
-
-For every slice:
-
-1. All points whose height falls within the slice interval are selected.
-2. The points are projected onto the XY plane.
-3. A **2D histogram** is computed to represent point density within the slice.
-4. The density values are normalized and converted to an **8-bit grayscale image**.
-5. The resulting raster is saved as a **PNG image**.
-
-Each image therefore represents the **horizontal structure of the tree at a specific height**.
-
-An example filename looks as follows:
-
-```
-Tree_012_slice_034.png
-```
-
-This naming convention allows the slice index and source tree to be easily identified.
+The output of this step was a **large segmented point cloud file** in which each point was assigned a **TreeID**, identifying the tree to which the point belongs.
 
 ---
 
-## 3.6 Metadata Generation
+## 2.3 Splitting the Segmented Dataset into Individual Tree Files
 
-During slicing, the script also generates a **metadata file** (`metadata.json`) that stores spatial information for every exported slice.
+The segmented dataset contained all trees within a single `.las` file. Due to the large size of this dataset, loading the entire file into **CloudCompare** frequently resulted in freezing or crashing of the software.
 
-For each image, the metadata records:
+To make the dataset manageable, the file was divided into separate point clouds containing **one tree per file**. This was done using a custom R script called **`Segmentor.R`**, which has been made available in the project repository.
 
-- The originating tree
-- The global XY origin of the raster
-- The vertical position of the slice
-- Pixel resolution
-- Image dimensions
+The script uses the **lidR** ecosystem for point cloud processing and performs the following operations:
 
-This information is important because it allows detections made on the images to later be mapped back into the **original three dimensional coordinate system**.
+1. **Loading the TLS dataset**  
+   The stand-level `.las` file is read into R using `lidR`.
+
+2. **Ground classification**  
+   Ground points are identified using the **Cloth Simulation Filter (CSF)** algorithm.
+
+3. **Digital Terrain Model (DTM) generation**  
+   A terrain surface is created using a **Triangulated Irregular Network (TIN)** interpolation.
+
+4. **Height normalization**  
+   The terrain model is subtracted from the point cloud so that all point heights represent **height above ground** rather than absolute elevation.
+
+5. **Removal of ground-level noise**  
+   Points below a minimum height threshold are removed to eliminate residual ground artifacts.
+
+6. **Computation of geometric descriptors**  
+   Additional geometric features required by the segmentation algorithm are calculated.
+
+7. **Tree segmentation**  
+   The **CSP-COST segmentation algorithm** is applied to assign each point a **TreeID**.
+
+8. **Export of individual trees**  
+   The final step splits the dataset according to the TreeID attribute and exports **one `.las` file per tree**.
+
+The primary purpose of this script was therefore not to perform the initial segmentation, but to **divide the segmented dataset into manageable files**, enabling interactive inspection and correction of individual trees in CloudCompare.
+
+After running the script, each tree existed as a separate `.las` file, which could be loaded independently.
+
+---
+
+## 2.4 Manual Inspection and Selection of Trees
+
+Once the individual tree files were created, they were loaded into **CloudCompare** for visual inspection.
+
+Although the automated segmentation performed reasonably well, some trees contained artifacts such as:
+
+- fragments of neighboring trees  
+- incorrectly assigned branch points  
+- residual background points
+
+To minimize noise in the training dataset, each group member selected **two to three trees** that required the least amount of manual correction.
+
+Minor adjustments were then made within CloudCompare to remove misclassified points and ensure that each dataset represented **a single clean tree point cloud**.
+
+These corrected trees formed the basis for the subsequent slicing workflow.
 
 ---
 
-## 3.7 Annotation of Tree Components
+## 2.5 Converting 3D Trees into 2D Image Slices
 
-Once the slice images were generated, they were imported into the annotation platform **CVAT**.
+Object detection models such as YOLO operate on **two-dimensional images**, while TLS data consists of **three-dimensional point clouds**. To bridge this gap, each tree was converted into a stack of two-dimensional slices.
 
-Each image was manually labelled to identify structural components of the tree. The following four classes were defined:
+This conversion was performed using a Python script called **`slicer.py`**, also available in the project repository.
 
-| Label | Description |
-|---|---|
-| grass | ground vegetation visible in lower slices |
-| twigs | very thin woody structures |
-| trunk | main stem of the tree |
-| branch | larger secondary woody structures |
+### Slicing Strategy
 
-The annotation process involved drawing bounding boxes around visible structures within each slice.
+The script processes each tree point cloud as follows:
 
-Although this step was time intensive, it produced a labelled dataset that links point cloud derived imagery to meaningful structural categories.
+1. **Loading the point cloud**  
+   Each `.las` file is read using the `laspy` library.
+
+2. **Determining spatial bounds**  
+   The global X and Y extent of the tree is calculated to define the image canvas.
+
+3. **Vertical stratification**  
+   The tree is divided into horizontal layers with a thickness of **20 cm** along the Z-axis.
+
+4. **Slice extraction**  
+   For each layer, all points whose height falls within the slice are selected.
+
+5. **Projection to 2D**  
+   The selected points are projected onto the **XY plane**, effectively collapsing the slice into two dimensions.
+
+6. **Density rasterization**  
+   A **2D histogram** is computed to represent the spatial density of points within the slice.
+
+7. **Spatial resolution**  
+   The raster grid uses a resolution of **1 cm per pixel**, producing a detailed representation of each cross-section.
+
+8. **Intensity normalization**  
+   To avoid extreme density values dominating the image, the pixel intensities are clipped at the **99th percentile** and rescaled to **0–255 (uint8)**.
+
+9. **Image export**  
+   Each slice is saved as a **PNG image**.
+
+All slices belonging to a given tree share identical spatial bounds, ensuring that the relative position of structures remains consistent across the vertical sequence.
+
+In addition to the images, the script also generates a **metadata file (`metadata.json`)** containing information such as:
+
+- slice height  
+- global spatial origin  
+- pixel resolution  
+- canvas dimensions
+
+This metadata enables the original 3D spatial context to be reconstructed if required.
+
+On average, this process generated approximately **150 slices per tree**, depending on tree height.
 
 ---
 
-## 3.8 Export to YOLO Dataset Format
+## 2.6 Dataset Annotation
 
-After annotation was completed, the dataset was exported from CVAT in **YOLO 1.1 format**.
+The resulting slice images were imported into **CVAT (Computer Vision Annotation Tool)** for manual labeling.
 
-In this format:
+Each image was inspected and annotated using **axis-aligned bounding boxes** to identify visible structural elements within the slice.
 
-- Each image is paired with a **text file** containing the bounding box annotations.
-- Each class label is represented by a **numeric index**.
+Four object classes were defined:
 
-An additional configuration file defines the mapping between indices and labels, for example:
+| Class | Description |
+|------|-------------|
+| **Trunk** | Cross-sections belonging to the main stem |
+| **Branch** | Larger lateral branches extending from the trunk |
+| **Twigs** | Fine distal branches and terminal growth |
+| **Grass** | Low vegetation and forest floor clutter |
 
-```
-0 grass
-1 twigs
-2 trunk
-3 branch
-```
+The annotation process required careful visual interpretation, since individual slices represent only a thin horizontal cross-section of the tree.
 
-This export produced a dataset that can be directly used by YOLO based detection models.
+After completion of the labeling process, the dataset was exported from CVAT in **YOLO 1.1 format**. In this format:
 
-The preparation of training and validation subsets is described in the following chapter.
+- Each image is associated with a **text file containing bounding box coordinates**.
+- Each object class is represented by a **numeric index (0–3)**.
+- A separate configuration file maps each index to its corresponding class label.
 
----
+This labeled dataset forms the foundation for training the object detection model described in the following chapters.
