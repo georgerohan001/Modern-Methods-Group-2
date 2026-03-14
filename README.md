@@ -486,6 +486,84 @@ The final annotated LAS files will appear in:
 Workflow/OUTPUT
 ```
 
+# 14. Run Pixel-Level and YOLO Metrics Evaluation
+
+The repository includes scripts to evaluate metrics for detection performance and predictions. These scripts allow detailed analysis of model performance.
+
+---
+
+## 14.1 Pixel-Level Metrics
+
+Script: `pixel_metrics.py`
+
+This script calculates pixel-level performance metrics, such as precision, recall, F1-score, and IoU, for every tree in the dataset.
+
+### Install Dependencies
+
+```bash
+pip install laspy numpy pandas opencv-python matplotlib ultralytics pillow
+```
+
+Ensure the following tools and files are in place:
+- **LAS files**: Point clouds for each tree.
+- **Predictions**: Files generated during step 11 using a trained YOLO model.
+- **Metadata**: JSON metadata generated during the slicing process.
+
+### Run
+
+```bash
+python pixel_metrics.py
+```
+
+### Output
+
+- Confusion matrices for each tree in:
+  ```
+  OUTPUT/pixel_metrics/confusion_matrices/<tree_name>/
+  ```
+- Summary statistics for all trees:
+  ```
+  Printed on screen or stored as logs
+  ```
+
+### Example Workflow
+
+Simply place your LAS files for testing in the `TEST` folder under `Workflow`, along with the trained model at `Model/best.pt`, and run:
+
+```bash
+python run.py
+```
+
+---
+
+## 14.2 YOLO Metrics Evaluation
+
+Script: `yolo_metrics.py`
+
+This script computes object-level metrics using YOLO's built-in evaluation tools. It calculates metrics like mAP, precision, recall, and F1-score.
+
+### Install Dependencies
+
+```bash
+pip install ultralytics torch pathlib
+```
+
+### Run
+
+```bash
+python yolo_metrics.py
+```
+
+This will:
+1. Prepare the dataset structure.
+2. Map ground truth labels and predictions for evaluation.
+3. Print box-level evaluation metrics.
+
+### Outputs
+
+Key metrics and evaluation results are printed on the screen, such as:
+- `mAP50`: Mean Average Precision at IoU threshold of 50%.
+- `F1`: F1 score based on precision and recall.
 ---
 
 If you need methodological details, refer to the [project report](https://georgerohan001.github.io/Modern-Methods-Group-2/motivation.html).
