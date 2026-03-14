@@ -526,14 +526,6 @@ python pixel_metrics.py
   Printed on screen or stored as logs
   ```
 
-### Example Workflow
-
-Simply place your LAS files for testing in the `TEST` folder under `Workflow`, along with the trained model at `Model/best.pt`, and run:
-
-```bash
-python run.py
-```
-
 ---
 
 ## 14.2 YOLO Metrics Evaluation
