@@ -25,9 +25,7 @@ cd Modern-Methods-Group-2
 
 You may use the same dataset used in this project.
 
-Download example TLS data:
-
-[https://bwsyncandshare.kit.edu/public.php/dav/files/79nqaSBT2Y6tkYH/2026-03-02_Mathisleweiher.laz](https://bwsyncandshare.kit.edu/public.php/dav/files/79nqaSBT2Y6tkYH/2026-03-02_Mathisleweiher.laz)
+Download [example TLS data](https://bwsyncandshare.kit.edu/public.php/dav/files/79nqaSBT2Y6tkYH/2026-03-02_Mathisleweiher.laz).
 
 Convert it to `.las` if necessary.
 
@@ -490,6 +488,4 @@ Workflow/OUTPUT
 
 ---
 
-If you need methodological details, refer to the project report:
-
-[https://georgerohan001.github.io/Modern-Methods-Group-2/motivation.html](https://georgerohan001.github.io/Modern-Methods-Group-2/motivation.html)
+If you need methodological details, refer to the [project report](https://georgerohan001.github.io/Modern-Methods-Group-2/motivation.html).
