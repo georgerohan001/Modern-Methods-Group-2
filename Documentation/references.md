@@ -1,4 +1,4 @@
-# References
+# 6. References
 * **Calders, K., et al. (2017).** *Realistic terrestrial laser scanning simulations of forest canopies.*
 * **Chen, Z., et al. (2024).** *Advancements in LiDAR-based individual tree modeling.*
 * **Hackenberg, J., et al. (2015).** *SimpleTree — An Efficient Open Source Tool to Estimate Tree Structural Parameters and Biomass from TLS Data.*
