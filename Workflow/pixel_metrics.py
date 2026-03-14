@@ -37,12 +37,14 @@ SLICE_HEIGHT = 0.20
 PIXEL_SIZE = 0.01
 CONF_THRESHOLD = 0.10
 
+
 @dataclass
 class ClassConfig:
     name: str
     code: int
     color: tuple[int, int, int]
     priority: int
+
 
 CLASSES = {
     0: ClassConfig("twigs", 3, (120, 120, 120), 2),
@@ -80,10 +82,15 @@ args.assigned_pixels_dir.mkdir(parents=True, exist_ok=True)
 metadata_store = {}
 
 tree_folders = sorted(
-    d for d in TEST_DIR.iterdir()
-    if d.is_dir() and (d / "obj.names").exists() and ((not include_trees) or d.name in include_trees)
+    d
+    for d in TEST_DIR.iterdir()
+    if d.is_dir()
+    and (d / "obj.names").exists()
+    and ((not include_trees) or d.name in include_trees)
 )
-print(f"\nFound {len(tree_folders)} tree(s) with reference labels: {[f.name for f in tree_folders]}")
+print(
+    f"\nFound {len(tree_folders)} tree(s) with reference labels: {[f.name for f in tree_folders]}"
+)
 
 las_trees = {path.stem for path in INPUT_DIR.glob("*.las")}
 print(f"Found LAS file(s) in INPUT: {las_trees}")
@@ -111,49 +118,54 @@ else:
         las = laspy.read(las_file)
         points = np.column_stack((las.x, las.y, las.z))
 
-    x_min, y_min, z_min = np.min(points, axis=0)
-    x_max, y_max, z_max = np.max(points, axis=0)
+        x_min, y_min, z_min = np.min(points, axis=0)
+        x_max, y_max, z_max = np.max(points, axis=0)
 
-    w = int((x_max - x_min) / PIXEL_SIZE) + 1
-    h = int((y_max - y_min) / PIXEL_SIZE) + 1
-    n_slices = int((z_max - z_min) / SLICE_HEIGHT)
+        w = int((x_max - x_min) / PIXEL_SIZE) + 1
+        h = int((y_max - y_min) / PIXEL_SIZE) + 1
+        n_slices = int((z_max - z_min) / SLICE_HEIGHT)
 
-    for i in range(n_slices):
-        z_low = z_min + i * SLICE_HEIGHT
-        z_high = z_low + SLICE_HEIGHT
+        for i in range(n_slices):
+            z_low = z_min + i * SLICE_HEIGHT
+            z_high = z_low + SLICE_HEIGHT
 
-        mask = (points[:, 2] >= z_low) & (points[:, 2] < z_high)
-        slice_points = points[mask]
+            mask = (points[:, 2] >= z_low) & (points[:, 2] < z_high)
+            slice_points = points[mask]
 
-        counts, _, _ = np.histogram2d(
-            slice_points[:, 0],
-            slice_points[:, 1],
-            bins=[w, h],
-            range=[[x_min, x_max], [y_min, y_max]],
-        )
+            counts, _, _ = np.histogram2d(
+                slice_points[:, 0],
+                slice_points[:, 1],
+                bins=[w, h],
+                range=[[x_min, x_max], [y_min, y_max]],
+            )
 
-        max_val = np.percentile(counts, 99)
-        raster = np.clip(counts * (255 / (max_val + 1e-6)), 0, 255).astype(np.uint8)
+            max_val = np.percentile(counts, 99)
+            raster = np.clip(counts * (255 / (max_val + 1e-6)), 0, 255).astype(np.uint8)
 
-        img_name = f"{tree_name}_slice_{i:03d}.png"
-        cv2.imwrite(str(CHANNEL0 / img_name), raster.T)
+            img_name = f"{tree_name}_slice_{i:03d}.png"
+            cv2.imwrite(str(CHANNEL0 / img_name), raster.T)
 
-        metadata_store[img_name] = {
-            "tree_name": tree_name,
-            "x_origin_global": float(x_min),
-            "y_origin_global": float(y_min),
-            "z_layer": float(z_low),
-            "pixel_size": PIXEL_SIZE,
-            "canvas_w": w,
-            "canvas_h": h,
-        }
+            metadata_store[img_name] = {
+                "tree_name": tree_name,
+                "x_origin_global": float(x_min),
+                "y_origin_global": float(y_min),
+                "z_layer": float(z_low),
+                "pixel_size": PIXEL_SIZE,
+                "canvas_w": w,
+                "canvas_h": h,
+            }
 
 if expected_images > 0 and existing_images >= expected_images:
     pass
 else:
     channel0_files = sorted(
         CHANNEL0.glob("*.png"),
-        key=lambda p: (re.sub(r"_(\d+)$", "", p.stem), int(re.search(r"_(\d+)$", p.stem).group(1)) if re.search(r"_(\d+)$", p.stem) else 0)
+        key=lambda p: (
+            re.sub(r"_(\d+)$", "", p.stem),
+            int(re.search(r"_(\d+)$", p.stem).group(1))
+            if re.search(r"_(\d+)$", p.stem)
+            else 0,
+        ),
     )
 
     grouped = {}
@@ -164,7 +176,11 @@ else:
     for stem, paths in grouped.items():
         ordered_paths = sorted(
             paths,
-            key=lambda p: int(re.search(r"_(\d+)$", p.stem).group(1)) if re.search(r"_(\d+)$", p.stem) else 0,
+            key=lambda p: (
+                int(re.search(r"_(\d+)$", p.stem).group(1))
+                if re.search(r"_(\d+)$", p.stem)
+                else 0
+            ),
         )
         for i, dst in enumerate(ordered_paths):
             src = ordered_paths[max(i - 1, 0)]
@@ -172,7 +188,12 @@ else:
 
     channel1_files = sorted(
         CHANNEL1.glob("*.png"),
-        key=lambda p: (re.sub(r"_(\d+)$", "", p.stem), int(re.search(r"_(\d+)$", p.stem).group(1)) if re.search(r"_(\d+)$", p.stem) else 0)
+        key=lambda p: (
+            re.sub(r"_(\d+)$", "", p.stem),
+            int(re.search(r"_(\d+)$", p.stem).group(1))
+            if re.search(r"_(\d+)$", p.stem)
+            else 0,
+        ),
     )
 
     grouped = {}
@@ -183,7 +204,11 @@ else:
     for stem, paths in grouped.items():
         ordered_paths = sorted(
             paths,
-            key=lambda p: int(re.search(r"_(\d+)$", p.stem).group(1)) if re.search(r"_(\d+)$", p.stem) else 0,
+            key=lambda p: (
+                int(re.search(r"_(\d+)$", p.stem).group(1))
+                if re.search(r"_(\d+)$", p.stem)
+                else 0
+            ),
         )
         for i, dst in enumerate(ordered_paths):
             src = ordered_paths[max(i - 1, 0)]
@@ -201,11 +226,19 @@ else:
     for r_path in CHANNEL0.glob("*.png"):
         stem = r_path.stem
         ch_r = np.array(Image.open(r_path).convert("L"), dtype=np.uint8)
-        ch_g = np.array(Image.open(CHANNEL1 / f"{stem}.png").convert("L"), dtype=np.uint8)
-        ch_b = np.array(Image.open(CHANNEL2 / f"{stem}.png").convert("L"), dtype=np.uint8)
-        ch_a = np.array(Image.open(CHANNEL3 / f"{stem}.png").convert("L"), dtype=np.uint8)
+        ch_g = np.array(
+            Image.open(CHANNEL1 / f"{stem}.png").convert("L"), dtype=np.uint8
+        )
+        ch_b = np.array(
+            Image.open(CHANNEL2 / f"{stem}.png").convert("L"), dtype=np.uint8
+        )
+        ch_a = np.array(
+            Image.open(CHANNEL3 / f"{stem}.png").convert("L"), dtype=np.uint8
+        )
         stacked = np.stack([ch_r, ch_g, ch_b, ch_a], axis=2)
-        Image.fromarray(stacked).save(IMAGES_DIR / f"{stem}.tif", compression="tiff_deflate")
+        Image.fromarray(stacked).save(
+            IMAGES_DIR / f"{stem}.tif", compression="tiff_deflate"
+        )
 
     print(f"   Generated {len(list(IMAGES_DIR.glob('*.tif')))} images")
 
@@ -275,7 +308,7 @@ for tree_folder in tree_folders:
                 gt_arr = np.atleast_2d(gt_arr)
                 if gt_arr.shape[1] < 5:
                     padded = np.zeros((gt_arr.shape[0], 5), dtype=float)
-                    padded[:, :gt_arr.shape[1]] = gt_arr
+                    padded[:, : gt_arr.shape[1]] = gt_arr
                     gt_arr = padded
 
         if (not pred_file.exists()) or pred_file.stat().st_size == 0:
@@ -288,7 +321,7 @@ for tree_folder in tree_folders:
                 pred_arr = np.atleast_2d(pred_arr)
                 if pred_arr.shape[1] < 6:
                     padded = np.zeros((pred_arr.shape[0], 6), dtype=float)
-                    padded[:, :pred_arr.shape[1]] = pred_arr
+                    padded[:, : pred_arr.shape[1]] = pred_arr
                     pred_arr = padded
 
         pred_arr = pred_arr[pred_arr[:, 5] >= args.conf]
@@ -298,50 +331,94 @@ for tree_folder in tree_folders:
             class_id = int(row[0])
             if class_id >= NUM_CLASSES or class_id < 0:
                 continue
-            gt_boxes.append({
-                "class": class_id,
-                "x_center": float(row[1]),
-                "y_center": float(row[2]),
-                "width": float(row[3]),
-                "height": float(row[4]),
-                "conf": float(row[5]) if len(row) > 5 else 1.0,
-            })
+            gt_boxes.append(
+                {
+                    "class": class_id,
+                    "x_center": float(row[1]),
+                    "y_center": float(row[2]),
+                    "width": float(row[3]),
+                    "height": float(row[4]),
+                    "conf": float(row[5]) if len(row) > 5 else 1.0,
+                }
+            )
 
         pred_boxes = []
         for row in pred_arr:
             class_id = int(row[0])
             if class_id >= NUM_CLASSES or class_id < 0:
                 continue
-            pred_boxes.append({
-                "class": class_id,
-                "x_center": float(row[1]),
-                "y_center": float(row[2]),
-                "width": float(row[3]),
-                "height": float(row[4]),
-                "conf": float(row[5]),
-            })
+            pred_boxes.append(
+                {
+                    "class": class_id,
+                    "x_center": float(row[1]),
+                    "y_center": float(row[2]),
+                    "width": float(row[3]),
+                    "height": float(row[4]),
+                    "conf": float(row[5]),
+                }
+            )
 
         gt_mask = np.full((height, width), BACKGROUND_IDX, dtype=np.uint8)
         pred_mask = np.full((height, width), BACKGROUND_IDX, dtype=np.uint8)
 
-        gt_boxes = sorted(gt_boxes, key=lambda b: (CLASS_PRIORITIES[b["class"]], b["conf"]))
-        pred_boxes = sorted(pred_boxes, key=lambda b: (CLASS_PRIORITIES[b["class"]], b["conf"]))
+        gt_boxes = sorted(
+            gt_boxes, key=lambda b: (CLASS_PRIORITIES[b["class"]], b["conf"])
+        )
+        pred_boxes = sorted(
+            pred_boxes, key=lambda b: (CLASS_PRIORITIES[b["class"]], b["conf"])
+        )
 
         for box in gt_boxes:
-            x1 = max(0, min(width, int(np.floor((box["x_center"] - box["width"] / 2) * width))))
-            y1 = max(0, min(height, int(np.floor((box["y_center"] - box["height"] / 2) * height))))
-            x2 = max(0, min(width, int(np.ceil((box["x_center"] + box["width"] / 2) * width))))
-            y2 = max(0, min(height, int(np.ceil((box["y_center"] + box["height"] / 2) * height))))
+            x1 = max(
+                0,
+                min(width, int(np.floor((box["x_center"] - box["width"] / 2) * width))),
+            )
+            y1 = max(
+                0,
+                min(
+                    height,
+                    int(np.floor((box["y_center"] - box["height"] / 2) * height)),
+                ),
+            )
+            x2 = max(
+                0,
+                min(width, int(np.ceil((box["x_center"] + box["width"] / 2) * width))),
+            )
+            y2 = max(
+                0,
+                min(
+                    height, int(np.ceil((box["y_center"] + box["height"] / 2) * height))
+                ),
+            )
             gt_mask[y1:y2, x1:x2] = box["class"]
 
         for box in pred_boxes:
-            x1 = max(0, min(width, int(np.floor((box["x_center"] - box["width"] / 2) * width))))
-            y1 = max(0, min(height, int(np.floor((box["y_center"] - box["height"] / 2) * height))))
-            x2 = max(0, min(width, int(np.ceil((box["x_center"] + box["width"] / 2) * width))))
-            y2 = max(0, min(height, int(np.ceil((box["y_center"] + box["height"] / 2) * height))))
+            x1 = max(
+                0,
+                min(width, int(np.floor((box["x_center"] - box["width"] / 2) * width))),
+            )
+            y1 = max(
+                0,
+                min(
+                    height,
+                    int(np.floor((box["y_center"] - box["height"] / 2) * height)),
+                ),
+            )
+            x2 = max(
+                0,
+                min(width, int(np.ceil((box["x_center"] + box["width"] / 2) * width))),
+            )
+            y2 = max(
+                0,
+                min(
+                    height, int(np.ceil((box["y_center"] + box["height"] / 2) * height))
+                ),
+            )
             pred_mask[y1:y2, x1:x2] = box["class"]
 
-        gray = np.array(Image.open(CHANNEL0 / f"{pred_stem}.png").convert("L"), dtype=np.uint8)
+        gray = np.array(
+            Image.open(CHANNEL0 / f"{pred_stem}.png").convert("L"), dtype=np.uint8
+        )
         black_mask = gray == 0
         gt_mask[black_mask] = BACKGROUND_IDX
         pred_mask[black_mask] = BACKGROUND_IDX
@@ -371,20 +448,26 @@ for tree_folder in tree_folders:
 
         precision = tp / (tp + fp) if (tp + fp) else 0.0
         recall = tp / (tp + fn) if (tp + fn) else 0.0
-        f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) else 0.0
+        f1 = (
+            (2 * precision * recall) / (precision + recall)
+            if (precision + recall)
+            else 0.0
+        )
         IoU = tp / (tp + fp + fn) if (tp + fp + fn) else 0.0
 
-        class_metrics.append({
-            "class": cls,
-            "name": YOLO_CLASS_NAMES[cls],
-            "tp": tp,
-            "fp": fp,
-            "fn": fn,
-            "precision": precision,
-            "recall": recall,
-            "f1": f1,
-            "iou": IoU,
-        })
+        class_metrics.append(
+            {
+                "class": cls,
+                "name": YOLO_CLASS_NAMES[cls],
+                "tp": tp,
+                "fp": fp,
+                "fn": fn,
+                "precision": precision,
+                "recall": recall,
+                "f1": f1,
+                "iou": IoU,
+            }
+        )
 
     total_tp = sum(item["tp"] for item in class_metrics)
     total_fp = sum(item["fp"] for item in class_metrics)
@@ -392,7 +475,9 @@ for tree_folder in tree_folders:
 
     precision = total_tp / (total_tp + total_fp) if (total_tp + total_fp) else 0.0
     recall = total_tp / (total_tp + total_fn) if (total_tp + total_fn) else 0.0
-    f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) else 0.0
+    f1 = (
+        (2 * precision * recall) / (precision + recall) if (precision + recall) else 0.0
+    )
 
     foreground_sum = int(counts[:NUM_CLASSES, :].sum())
     total_pixels = int(counts.sum())
@@ -403,7 +488,9 @@ for tree_folder in tree_folders:
     miou = float(np.mean([item["iou"] for item in class_metrics]))
 
     print(f"RESULTS FOR TREE: {tree_name}")
-    print(f"\n{'Class':<15} {'TP(px)':>12} {'FP(px)':>12} {'FN(px)':>12} {'Precision':>10} {'Recall':>10} {'F1':>10} {'IoU':>10}")
+    print(
+        f"\n{'Class':<15} {'TP(px)':>12} {'FP(px)':>12} {'FN(px)':>12} {'Precision':>10} {'Recall':>10} {'F1':>10} {'IoU':>10}"
+    )
 
     for item in class_metrics:
         print(
@@ -418,26 +505,30 @@ for tree_folder in tree_folders:
     print(f"\n{'Pixel Accuracy:':<20} {pixel_accuracy:.4f}")
     print(f"{'Foreground Acc.:':<20} {foreground_accuracy:.4f}")
 
-    tree_summaries.append({
-        "tree": tree_name,
-        "total_tp": int(total_tp),
-        "total_fp": int(total_fp),
-        "total_fn": int(total_fn),
-        "precision": float(precision),
-        "recall": float(recall),
-        "f1": float(f1),
-        "pixel_accuracy": float(pixel_accuracy),
-        "foreground_accuracy": float(foreground_accuracy),
-        "miou": float(miou),
-        "total_pixels": int(total_pixels),
-        "class_metrics": class_metrics,
-    })
+    tree_summaries.append(
+        {
+            "tree": tree_name,
+            "total_tp": int(total_tp),
+            "total_fp": int(total_fp),
+            "total_fn": int(total_fn),
+            "precision": float(precision),
+            "recall": float(recall),
+            "f1": float(f1),
+            "pixel_accuracy": float(pixel_accuracy),
+            "foreground_accuracy": float(foreground_accuracy),
+            "miou": float(miou),
+            "total_pixels": int(total_pixels),
+            "class_metrics": class_metrics,
+        }
+    )
 
     total_confusion_counts += counts
 
     labels = YOLO_CLASS_NAMES + ["background"]
     row_sums = counts.sum(axis=1, keepdims=True)
-    matrix_to_plot = np.divide(counts, row_sums, out=np.zeros_like(counts, dtype=float), where=row_sums > 0).T
+    matrix_to_plot = np.divide(
+        counts, row_sums, out=np.zeros_like(counts, dtype=float), where=row_sums > 0
+    ).T
     plot_counts = counts.T
 
     tree_conf_dir = args.output_root / "confusion_matrices" / tree_name
@@ -454,11 +545,21 @@ for tree_folder in tree_folders:
     ax.set_yticklabels(labels)
 
     max_val = matrix_to_plot.max()
-    for i, j in itertools.product(range(matrix_to_plot.shape[0]), range(matrix_to_plot.shape[1])):
+    for i, j in itertools.product(
+        range(matrix_to_plot.shape[0]), range(matrix_to_plot.shape[1])
+    ):
         value = matrix_to_plot[i, j]
         count = plot_counts[i, j]
         color = "white" if value > max_val * 0.5 else "#1a1a1a"
-        ax.text(j, i, f"{value:.2f}\n({count})", ha="center", va="center", color=color, fontsize=9)
+        ax.text(
+            j,
+            i,
+            f"{value:.2f}\n({count})",
+            ha="center",
+            va="center",
+            color=color,
+            fontsize=9,
+        )
 
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     cbar.set_label("Proportion", rotation=90)
@@ -476,11 +577,14 @@ f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) els
 
 total_pixels = sum(item["total_pixels"] for item in tree_summaries)
 pixel_accuracy = (
-    sum(item["pixel_accuracy"] * item["total_pixels"] for item in tree_summaries) / total_pixels
+    sum(item["pixel_accuracy"] * item["total_pixels"] for item in tree_summaries)
+    / total_pixels
     if total_pixels
     else 0.0
 )
-mean_miou = float(np.mean([item["miou"] for item in tree_summaries])) if tree_summaries else 0.0
+mean_miou = (
+    float(np.mean([item["miou"] for item in tree_summaries])) if tree_summaries else 0.0
+)
 
 print("\n ====== OVERALL SUMMARY ======")
 print(f"Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1:.4f}")
@@ -488,7 +592,12 @@ print(f"Pixel Accuracy: {pixel_accuracy:.4f} | mIoU: {mean_miou:.4f}")
 
 labels = YOLO_CLASS_NAMES + ["background"]
 row_sums = total_confusion_counts.sum(axis=1, keepdims=True)
-matrix_to_plot = np.divide(total_confusion_counts, row_sums, out=np.zeros_like(total_confusion_counts, dtype=float), where=row_sums > 0).T
+matrix_to_plot = np.divide(
+    total_confusion_counts,
+    row_sums,
+    out=np.zeros_like(total_confusion_counts, dtype=float),
+    where=row_sums > 0,
+).T
 plot_counts = total_confusion_counts.T
 
 all_conf_dir = args.output_root / "confusion_matrices"
@@ -505,11 +614,21 @@ ax.set_yticks(np.arange(len(labels)))
 ax.set_yticklabels(labels)
 
 max_val = matrix_to_plot.max()
-for i, j in itertools.product(range(matrix_to_plot.shape[0]), range(matrix_to_plot.shape[1])):
+for i, j in itertools.product(
+    range(matrix_to_plot.shape[0]), range(matrix_to_plot.shape[1])
+):
     value = matrix_to_plot[i, j]
     count = plot_counts[i, j]
     color = "white" if value > max_val * 0.5 else "#1a1a1a"
-    ax.text(j, i, f"{value:.2f}\n({count})", ha="center", va="center", color=color, fontsize=9)
+    ax.text(
+        j,
+        i,
+        f"{value:.2f}\n({count})",
+        ha="center",
+        va="center",
+        color=color,
+        fontsize=9,
+    )
 
 cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 cbar.set_label("Proportion", rotation=90)
