@@ -1,49 +1,89 @@
+```markdown
 # 5. Training Process
 
-The training phase was executed using the **Ultralytics** engine, specifically optimized for our custom 4-channel input tensors. This section details the hyperparameter configuration and the convergence behavior of the model.
+This chapter describes how the adapted YOLO11 model was fine-tuned on the prepared dataset. Training was performed using the **Ultralytics** training engine, which handles the optimization loop, metric tracking, and validation routines. Custom scripts in the project repository were used to launch the training and verify that the modified model correctly accepted the four-channel input tensors.
+
+The goal of this stage was to allow the pretrained detector to learn how to incorporate the additional structural information provided by the extra channel while maintaining stable convergence.
 
 ---
 
 ## 5.1 Training Configuration
-The model was fine-tuned on a high-performance workstation using a CUDA-enabled GPU. The following hyperparameters were used to ensure stable convergence of the weights:
+
+Training was executed on a CUDA-enabled workstation using GPU acceleration through the Ultralytics framework. The training run was launched via the script `train_4ch_detection.py`, which loads the custom model configuration and dataset definition before starting the optimization loop.
+
+Before training begins, the script prints the shape of the first convolutional layer. This verification step confirms that the loaded checkpoint has successfully been converted to accept **four input channels**, ensuring that the modification performed earlier in `make_4ch_checkpoint.py` is active.
+
+The primary training parameters are summarized below.
 
 | Parameter | Value | Description |
 | :--- | :--- | :--- |
-| **Epochs** | 300 | Maximum iteration limit. |
-| **Batch Size** | 32 | Balanced for VRAM efficiency and gradient stability. |
-| **Image Size** | 640 px | Standard resolution for YOLOv11 high-fidelity detection. |
-| **Device** | GPU (0) | CUDA acceleration enabled. |
-| **AMP** | True | Automatic Mixed Precision for faster training. |
-| **Optimizer** | Auto | Ultralytics default (typically SGD or AdamW). |
+| **Epochs** | 300 | Maximum number of training iterations |
+| **Batch Size** | 32 | Balanced GPU memory usage and gradient stability |
+| **Image Size** | 640 px | Standard YOLO input resolution |
+| **Device** | GPU (CUDA) | Hardware acceleration enabled |
+| **AMP** | Enabled | Automatic Mixed Precision for faster training |
+| **Optimizer** | Auto | Optimizer automatically selected by Ultralytics |
+
+> [!NOTE] Hardware Considerations  
+> The chosen configuration was designed to balance training speed and memory usage on the available GPU. The batch size and image resolution allowed stable training without exceeding VRAM limits.
 
 ---
 
-## 5.2 Convergence & Early Termination
-While the training was initialized for 300 epochs, the model utilized **Early Stopping** logic to prevent overfitting and save computational resources.
+## 5.2 Convergence Behaviour
 
-* **Termination Point:** Training effectively concluded between **Epoch 180 and 200**.
-* **Reasoning:** The validation loss and mAP (Mean Average Precision) metrics reached a plateau. Improvements in subsequent epochs were statistically insignificant, indicating that the model had reached its optimal capacity for the provided dataset.
+Although the maximum training duration was set to **300 epochs**, the effective learning phase concluded earlier. The validation metrics stabilized between **Epoch 180 and 200**, indicating that the network had extracted most of the useful patterns from the dataset.
+
+After this point, improvements in the validation metrics were minimal. Continuing the training would therefore increase computation time without producing meaningful performance gains.
+
+> [!TIP] Training Plateau  
+> When validation metrics stabilize across multiple epochs, the model has typically reached the performance limit supported by the dataset and model capacity. Stopping near this plateau avoids unnecessary computation while preserving the best-performing weights.
 
 ---
 
 ## 5.3 Performance Metrics
-During the training process, the following key metrics were monitored via the validation set (20% split):
 
-### 1. Box Loss
-Measures how accurately the model locates the center of a tree component and how well the predicted bounding box covers the object.
+During training, the Ultralytics engine continuously evaluated the model on the validation subset. Several metrics were monitored to assess both localization accuracy and classification performance.
 
-### 2. mAP@50 (Mean Average Precision)
-This represents the accuracy of the model at an Intersection over Union (IoU) threshold of 0.5. It is the primary indicator of the model's ability to correctly identify **Trunks** vs. **Branches**.
+### Box Loss
 
-### 3. F1-Score
-The harmonic mean of Precision and Recall. This was particularly important for our **"Twigs"** class, where we needed to balance the model's sensitivity (finding all twigs) with its precision (not misidentifying noise as twigs).
+This metric measures how accurately the predicted bounding boxes align with the annotated objects. Lower values indicate better localization of tree components within the slice images.
 
-> [!NOTE] Validation Strategy
-> Because the validation set included images from the same trees used in training (but different slices), the model showed high proficiency in recognizing familiar structural patterns. The true test of robustness was reserved for the unlabelled external test site.
+### mAP@50 (Mean Average Precision)
+
+The primary evaluation metric was the **mean average precision at an Intersection over Union (IoU) threshold of 0.5**. This value summarizes how reliably the model detects and classifies objects across the validation dataset.
+
+For this project, the metric mainly reflects how well the model distinguishes between **trunks, branches, twigs, and grass**.
+
+### F1 Score
+
+The **F1 score** combines precision and recall into a single measure. It was particularly useful for evaluating the **twig class**, where sparse point distributions can easily be confused with background noise.
+
+Maintaining a balance between detecting small twig structures and avoiding false positives was therefore an important indicator of model quality.
 
 ---
 
-## 5.4 Monitoring the First Convolution
-Before the training loop commenced, a verification check was performed on the **First Convolutional Layer**. 
+## 5.4 Validation Strategy
 
-By confirming the weight shape as `[Out, 4, K, K]`, we ensured that the `make_4ch_checkpoint.py` modification had successfully integrated the 4th "Height Index" channel into the pretrained architecture without breaking the weight loading process.
+The validation set consisted of slices derived from the same trees used for training but representing **different vertical sections**. This ensured that the model was evaluated on images it had not seen before while still preserving realistic structural patterns.
+
+> [!NOTE] Validation Limitations  
+> Because the validation slices originate from the same trees as the training set, the model may still encounter familiar structural patterns. A more rigorous evaluation was therefore performed later using an external test dataset.
+
+---
+
+## 5.5 Prediction Workflow
+
+After training, the best-performing checkpoint was used for inference on generated slice images. This step was implemented in the repository script `predict_on_train.py`, which loads the trained model and applies it to a directory containing the multi-channel slice images.
+
+The script exports predictions in two formats:
+
+| Output | Purpose |
+| :--- | :--- |
+| **Annotated Images** | Visual inspection of detection results |
+| **YOLO Label Files** | Bounding box coordinates and confidence scores |
+
+These predictions serve as the input for the later post-processing stage, where the detected objects are mapped back to their corresponding locations in the original **3D point cloud**.
+
+> [!TIP] Why Export YOLO Labels  
+> Saving predictions in YOLO format makes it straightforward to reuse the results for downstream processing, evaluation, or reprojection into the 3D coordinate system.
+```
