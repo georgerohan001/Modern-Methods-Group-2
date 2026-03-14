@@ -587,8 +587,6 @@ python yolo_metrics.py
      ```
    - `data.yaml` file is generated within this directory, detailing the dataset configuration.
 
----
-
 These metrics provide insights into how well the model is detecting tree components at both pixel-level and object-level resolutions.
 
 ---
