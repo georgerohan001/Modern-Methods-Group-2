@@ -496,18 +496,7 @@ The repository includes scripts to evaluate both pixel-level and object-level me
 
 Script: `pixel_metrics.py`
 
-This script calculates **pixel-level metrics**, such as precision, recall, F1-score, and Intersection-over-Union (IoU), using predicted and ground truth labels. Metrics are calculated for each tree and aggregated across all trees.
-
-### Metrics Generated
-- **Per Class Metrics**:
-  - True Positives (TP)
-  - False Positives (FP)
-  - False Negatives (FN)
-  - Precision, Recall, F1-score, IoU
-- **Overall Metrics**:
-  - Pixel Accuracy
-  - Foreground Pixel Accuracy
-  - Mean IoU (mIoU)
+This script calculates **pixel-level metrics**
 
 ### Install Dependencies
 
@@ -541,7 +530,7 @@ python pixel_metrics.py
      - `confusion_matrix_normalized.png`
 
 2. **Overall Statistics**:
-   - Summary metrics are **printed on the console** and can be stored as logs.
+   - Summary metrics are **printed on the console**.
    - Metrics include precision, recall, F1-score, Pixel Accuracy, Foreground Accuracy, and mIoU.
 
 3. **Per-Tree Details**:
@@ -550,6 +539,8 @@ python pixel_metrics.py
 ---
 
 ## 14.2 YOLO Object-Level Metrics Evaluation
+
+Please run `pixel_metrics.py` first!
 
 Script: `yolo_metrics.py`
 
