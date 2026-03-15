@@ -1,108 +1,118 @@
-## --------------------------------------------------------------
-## 0. Packages ----------------------------------------------------
-## --------------------------------------------------------------
-# If the packages are not yet installed, uncomment the line below:
-# install.packages(c("lidR", "terra", "CspStandSegmentation"))
+library(lidR)
 
-library(lidR)                 # point‑cloud I/O & many processing tools
-library(terra)                # raster handling (used internally by lidR)
-library(CspStandSegmentation) # CSP tree‑segmentation functions
+# =========================
+# Settings
+# =========================
+input_file <- "3dtree_404_3596_segmentation.laz"
+tree_field <- "preds_instance_segmentation"
 
-## --------------------------------------------------------------
-## 1. USER‑DEFINED SETTINGS --------------------------------------
-## --------------------------------------------------------------
-src_las   <- "group_321_GP.las"    # <-- path to your raw TLS file
-out_dir   <- "segmented_trees"    # folder where the per‑tree LAS files will be written
-eps_grid  <- 1.0                  # grid spacing (metres) for tree‑base detection
-dtm_res   <- 0.1                  # raster resolution (metres) for DTM/CHM
-min_tree_height <- 0.2           # points lower than this are discarded (optional)
+tile_dir  <- "tiles"
+parts_dir <- "tree_parts"
+out_dir   <- "trees_split"
 
-## --------------------------------------------------------------
-## 2. READ THE RAW POINT CLOUD ------------------------------------
-## --------------------------------------------------------------
-las <- readTLS(src_las)          # same as lidR::readTLS()
+dir.create(tile_dir,  showWarnings = FALSE, recursive = TRUE)
+dir.create(parts_dir, showWarnings = FALSE, recursive = TRUE)
+dir.create(out_dir,   showWarnings = FALSE, recursive = TRUE)
 
-## --------------------------------------------------------------
-## 3. CLASSIFY GROUND --------------------------------------------
-## --------------------------------------------------------------
-las <- classify_ground(las, csf())   # CSF works well for TLS data
+# =========================
+# 1) Read catalog metadata (safe)
+# =========================
+ctg <- readLAScatalog(input_file)
+print(ctg)
 
-## --------------------------------------------------------------
-## 4. DTM (digital terrain model) -------------------------------
-## --------------------------------------------------------------
-dtm <- rasterize_terrain(las,
-                         res = dtm_res,
-                         algorithm = tin())
+# =========================
+# 2) Retile (chunked) - tune chunk size
+# =========================
+# For terrestrial data this dense, smaller chunk sizes keep tiles manageable.
+# Start with 100m; if you get too many tiles, go 150–200m.
+opt_chunk_size(ctg)   <- 100
+opt_chunk_buffer(ctg) <- 0  # buffer not needed for instance ID splitting
 
-## --------------------------------------------------------------
-## 5. NORMALISE HEIGHT -------------------------------------------
-## --------------------------------------------------------------
-las_norm <- las - dtm               # Z now = height above ground
+# Keep what you need. Add other attributes if you want them preserved.
+# Example: opt_select(ctg) <- paste("xyz intensity", tree_field)
+opt_select(ctg) <- paste("xyz", tree_field)
 
-## --------------------------------------------------------------
-## 6. OPTIONAL: remove points that are essentially ground --------
-## --------------------------------------------------------------
-las_norm <- filter_poi(las_norm, Z >= min_tree_height)
+opt_output_files(ctg) <- file.path(tile_dir, "tile_{XLEFT}_{YBOTTOM}")
+catalog_retile(ctg)
+cat("Tiling finished.\n")
 
-## --------------------------------------------------------------
-## 7. ADD THE geometric descriptors required by CSP ---------------
-## --------------------------------------------------------------
-# This step was missing in your original script – without it the
-# segmentation algorithm prints a warning and may fail.
-las_norm <- add_geometry(las_norm)   # adds V_w, L_w, S_w scalar fields
+# =========================
+# 3) Stage 1: write per-tile tree parts (NO appending)
+# =========================
+tile_files <- list.files(tile_dir, pattern = "\\.la[sz]$", full.names = TRUE)
+n_tiles <- length(tile_files)
+cat("Found", n_tiles, "tile files.\n")
 
-## --------------------------------------------------------------
-## 8. FIND TREE‑BASE COORDINATES (raster) ------------------------
-## --------------------------------------------------------------
-base_map <- find_base_coordinates_raster(las_norm, eps = eps_grid)
+t0 <- Sys.time()
 
-# ---- sanity check -------------------------------------------------
-if (nrow(base_map) == 0) {
-  stop(paste0("No tree bases were detected (eps = ", eps_grid,
-              "). Try a smaller eps or inspect the point cloud."))
-} else {
-  cat("Detected", nrow(base_map), "candidate tree bases.\n")
+for (i in seq_along(tile_files)) {
+  f <- tile_files[i]
+  cat(sprintf("[parts %d/%d] %s (elapsed %s)\n",
+              i, n_tiles, basename(f), format(Sys.time() - t0)))
+  
+  las <- readLAS(f)
+  if (is.empty(las)) next
+  
+  if (!(tree_field %in% names(las@data))) {
+    stop(paste("Field", tree_field, "not found in tile:", f))
+  }
+  
+  ids <- unique(las@data[[tree_field]])
+  ids <- ids[!is.na(ids) & ids >= 0]
+  
+  # Use a stable per-tile tag for filenames
+  tile_tag <- tools::file_path_sans_ext(basename(f))
+  
+  for (tid in ids) {
+    part <- filter_poi(las, las@data[[tree_field]] == tid)
+    if (is.empty(part)) next
+    
+    # Write a "part" file for this tree from this tile
+    part_file <- file.path(parts_dir, sprintf("tree_%05d__%s.las", tid, tile_tag))
+    writeLAS(part, part_file)
+  }
+  
+  rm(las); gc()
 }
 
-## --------------------------------------------------------------
-## 9. CSP‑COST SEGMENTATION ---------------------------------------
-## --------------------------------------------------------------
-las_seg <- csp_cost_segmentation(las_norm, base_map)
-# The function adds an integer column called “TreeID” to every point.
+cat("Stage 1 done: wrote tree parts.\n")
 
-## --------------------------------------------------------------
-## 10. FOREST INVENTORY (optional – you had it in the original) --
-## --------------------------------------------------------------
-inventory <- forest_inventory(las_seg)   # returns a data.frame, you can write it out if you like
-# write.csv(inventory, file.path(out_dir, "forest_inventory.csv"), row.names = FALSE)
+# =========================
+# 4) Stage 2: merge parts into one LAS per tree
+# =========================
+part_files <- list.files(parts_dir, pattern = "^tree_\\d+__.*\\.las$", full.names = TRUE)
 
-## --------------------------------------------------------------
-## 11. POST‑PROCESSING: write ONE LAS per tree ------------------
-## --------------------------------------------------------------
-# --------------------------------------------------------------
-# 11.1  Create output folder (if it does not exist)
-# --------------------------------------------------------------
-dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+# Extract tree IDs from filenames
+tree_ids <- sub("^tree_(\\d{5})__.*$", "\\1", basename(part_files))
+tree_ids <- unique(tree_ids)
 
-# --------------------------------------------------------------
-# 11.2  Split the segmented cloud by TreeID
-# --------------------------------------------------------------
-# Points with TreeID == 0 are usually “noise / background”.  We drop them,
-# but you can keep them by commenting the next line.
-las_seg <- filter_poi(las_seg, TreeID > 0)
+cat("Merging", length(tree_ids), "trees...\n")
+t1 <- Sys.time()
 
-tree_list <- split(las_seg, las_seg$TreeID)   # a list, one element per tree
-
-cat("Exporting", length(tree_list), "trees →", out_dir, "\n")
-
-# --------------------------------------------------------------
-# 11.3  Write each tree to its own .las file
-# --------------------------------------------------------------
-for (tid in names(tree_list)) {
-  # Zero‑pad the ID so the files sort nicely (Tree_001.las, Tree_002.las, …)
-  fname <- sprintf("Tree_%03d.las", as.integer(tid))
-  writeLAS(tree_list[[tid]], file.path(out_dir, fname))
+for (j in seq_along(tree_ids)) {
+  tid_str <- tree_ids[j]
+  tid <- as.integer(tid_str)
+  
+  files_for_tree <- part_files[grepl(paste0("^tree_", tid_str, "__"), basename(part_files))]
+  
+  cat(sprintf("[merge %d/%d] tree %s (%d parts) (elapsed %s)\n",
+              j, length(tree_ids), tid_str, length(files_for_tree),
+              format(Sys.time() - t1)))
+  
+  # Read and combine all parts
+  las_list <- lapply(files_for_tree, readLAS)
+  las_list <- Filter(function(x) !is.empty(x), las_list)
+  if (length(las_list) == 0) next
+  
+  merged <- do.call(rbind, las_list)
+  
+  out_file <- file.path(out_dir, sprintf("tree_%05d.las", tid))
+  writeLAS(merged, out_file)
+  
+  # Optional: delete parts after successful merge to save space
+  # file.remove(files_for_tree)
+  
+  rm(las_list, merged); gc()
 }
 
-cat("All done! Open the folder '", out_dir,
-    "' in CloudCompare and select all *.las files – each will appear as a separate layer.\n")
+cat("All done. Output in:", out_dir, "\n")

@@ -31,26 +31,26 @@ Convert it to `.las` if necessary.
 
 ---
 
-# 3. Segment Individual Trees
+# 3. Split the Segmented Dataset into Individual Trees
 
 Script: `Segmentor.R`
 
-This script segments individual trees from a TLS forest scan and exports **one LAS file per tree**.
+This script divides an already segmented TLS dataset into **one LAS file per tree**.  
+The input point cloud must already contain a field with tree instance IDs (for example `preds_instance_segmentation`).  
+The script reorganizes the dataset so that each tree can be loaded independently in CloudCompare.
 
 ## Install Dependencies
 
-Open R and install the required packages:
+Open R and install the required package:
 
 ```r
-install.packages(c("lidR", "terra", "CspStandSegmentation"))
-```
+install.packages("lidR")
+````
 
-Load them:
+Load it:
 
 ```r
 library(lidR)
-library(terra)
-library(CspStandSegmentation)
 ```
 
 ## Edit the Script
@@ -58,12 +58,22 @@ library(CspStandSegmentation)
 Modify the following variables:
 
 ```
-src_las   <- "group_321_GP.las"
-out_dir   <- "segmented_trees"
+input_file <- "3dtree_404_3596_segmentation.laz"
+tree_field <- "preds_instance_segmentation"
 ```
 
-* `src_las` → path to your TLS point cloud
-* `out_dir` → folder where segmented trees will be saved
+* `input_file` → path to the segmented TLS point cloud
+* `tree_field` → attribute containing the tree instance IDs
+
+The script will automatically create three folders:
+
+```
+tiles
+tree_parts
+trees_split
+```
+
+The final individual trees will be written to `trees_split`.
 
 ## Run
 
@@ -73,15 +83,19 @@ Run the script in R:
 source("Segmentor.R")
 ```
 
+The script first divides the large point cloud into manageable tiles.
+Within each tile, points are grouped by their tree ID and written as temporary tree parts.
+These parts are then merged so that each tree is reconstructed as a single file.
+
 The output folder will contain files such as:
 
 ```
-Tree_001.las
-Tree_002.las
-Tree_003.las
+tree_00001.las
+tree_00002.las
+tree_00003.las
 ```
 
-Each file contains one segmented tree.
+Each file contains one individual tree and can be loaded independently.
 
 ---
 
