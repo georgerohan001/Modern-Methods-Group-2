@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import itertools
-import re
 import shutil
 import warnings
 from collections import defaultdict
@@ -35,11 +34,6 @@ OUTPUT_DIR = BASE_DIR / "OUTPUT" / "benchmark"
 ASSIGNED_DIR = BASE_DIR / "Assigned"
 
 CHANNEL0 = CHANNELS_DIR / "channel0"
-CHANNEL1 = CHANNELS_DIR / "channel1"
-CHANNEL2 = CHANNELS_DIR / "channel2"
-CHANNEL3 = CHANNELS_DIR / "channel3"
-
-IMAGE_EXTENSIONS = {".tif", ".png"}
 SLICE_HEIGHT = 0.20
 PIXEL_SIZE = 0.01
 IOU_THRESHOLD = 0.70
@@ -92,9 +86,6 @@ def parse_args() -> argparse.Namespace:
 def ensure_dirs(args: argparse.Namespace) -> None:
     """Create necessary directories."""
     CHANNEL0.mkdir(parents=True, exist_ok=True)
-    CHANNEL1.mkdir(parents=True, exist_ok=True)
-    CHANNEL2.mkdir(parents=True, exist_ok=True)
-    CHANNEL3.mkdir(parents=True, exist_ok=True)
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     PREDICTED_DIR.mkdir(parents=True, exist_ok=True)
     args.output_root.mkdir(parents=True, exist_ok=True)
@@ -145,7 +136,7 @@ def check_existing_images() -> int:
     return len([p for p in IMAGES_DIR.glob("*.tif") if p.is_file()])
 
 
-def generate_images_from_las(metadata_store: dict) -> None:
+def generate_images_from_las() -> None:
     """Generate multi-channel TIFF images from LAS files."""
     print("\n[1/4] Generating images from LAS files...")
 
@@ -181,16 +172,6 @@ def generate_images_from_las(metadata_store: dict) -> None:
 
             img_name = f"{tree_name}_slice_{i:03d}.png"
             cv2.imwrite(str(CHANNEL0 / img_name), raster.T)
-
-            metadata_store[img_name] = {
-                "tree_name": tree_name,
-                "x_origin_global": float(x_min),
-                "y_origin_global": float(y_min),
-                "z_layer": float(z_low),
-                "pixel_size": PIXEL_SIZE,
-                "canvas_w": w,
-                "canvas_h": h,
-            }
 
     build_multichannel_images()
     print(f"   Generated {check_existing_images()} images")
@@ -833,11 +814,10 @@ def main() -> None:
     expected = count_expected_images()
     existing = check_existing_images()
 
-    metadata_store: dict = {}
     if expected > 0 and existing >= expected:
         print(f"Reusing {existing} existing images")
     else:
-        generate_images_from_las(metadata_store)
+        generate_images_from_las()
 
     # Load model
     model = load_model()
