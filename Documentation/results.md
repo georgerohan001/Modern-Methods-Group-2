@@ -1,6 +1,6 @@
-# 3.  Results
+# 3.1  Results
 
-## 3.1 Evaluation with test data
+## 3.1.1 Evaluation with test data
 
 <div align="center">
   <table>
@@ -22,7 +22,7 @@ Model performance is substantially better when class assignments are evaluated a
 | mAP50 | 0.31 | - | - |
 | mAP50-95 | 0.17 | - | - |
 
-## 3.1 Visualization
+## 3.1.2 Visualization
 
 <figure>
   <div align="center">

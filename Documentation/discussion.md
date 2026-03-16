@@ -1,4 +1,4 @@
-# 7. Discussion
+# 3.2 Discussion
 
 The results demonstrate that 2D object detection is a highly effective shortcut for structural tree modeling, particularly given our limited training data and time. While the model reliably isolates the trunk, it has difficulty in distinguishing between twigs and branches. Grass was heavily underrepresented, which directly explains its poor detection rates. Confusion between branches and twigs appears to at least partially be caused by inconsistencies in the annotation process, suggesting that future improvements depend more on standardized annotation protocols and diverse data than on dataset scaling alone. Although we consider the current pixel-based evaluation to be quite representative of actual model performance, a next logical step would be to evaluate the tree segmentation directly at the point cloud level, since this represents the actual output.
 

@@ -1,3 +1,3 @@
-# 5. Conclusion
+# 3.3 Conclusion
 
 This project shows that treating branch and trunk separation as a 2D object-detection problem is a practical and promising approach for processing TLS-derived tree data. Despite limited training data and time constraints, the adapted 4-channel YOLO11s model identified trunks quite reliably and produced useful structural reconstructions, while confusion between branches and twigs and the weak grass class highlighted the need for more diverse training data and clearer annotation rules. Overall, the slicing strategy appears to be a worthwhile alternative to full 3D processing, and future work could test instance segmentation for further improvement.
