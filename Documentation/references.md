@@ -1,4 +1,4 @@
-# References
+# 3.3 References
 
 <div id="gonzalez2018"></div>
 
@@ -10,15 +10,15 @@
 
 <div id="hackenberg2015"></div>
 
-* Hackenberg, J., et al. (2015). SimpleTree—An Efficient Open Source Tool to Build Tree Models from TLS Clouds. *Forests*.
+* Hackenberg, J., Spiecker, H., Calders, K., Disney, M., & Raumonen, P. (2015). SimpleTree—An Efficient Open Source Tool to Build Tree Models from TLS Clouds. *Forests*, 6(11), 4245–4294. [https://doi.org/10.3390/f6114245](https://doi.org/10.3390/f6114245)
 
-<div id="hao2022"></div>
+<div id="jarahizadeh2024"></div>
 
-* Hao, Y., et al. (2022). Tree height-growth trajectory estimation using uni-temporal UAV laser scanning data and deep learning. *Forestry*.
+* Jarahizadeh, S., & Salehi, B. (2024). Deep Learning Analysis of UAV Lidar Point Cloud for Individual Tree Detecting. *IGARSS 2024 - 2024 IEEE International Geoscience and Remote Sensing Symposium*, 9953–9956. [https://doi.org/10.1109/IGARSS53475.2024.10640977](https://doi.org/10.1109/IGARSS53475.2024.10640977)
 
 <div id="jocher2023"></div>
 
-* Jocher, Glenn, Ayush Chaurasia, and Jing Qiu. 2023. “YOLO by Ultralytics.”
+* Jocher, G., Chaurasia, A., & Qiu, J. (2023). YOLO by Ultralytics. [https://github.com/ultralytics/ultralytics](https://github.com/ultralytics/ultralytics) (Accessed March 3rd 2026)
 
 <div id="kurdi2024"></div>
 
@@ -40,29 +40,25 @@
 
 * Pehkonen, M., Vastaranta, M., Holopainen, M., Hyyppä, J., Kukko, A., & Pyörälä, J. (2025). Identification and segmentation of branch whorls and sawlogs in standing timber using terrestrial laser scanning and deep learning. *Forestry: An International Journal of Forest Research*, 98(5), 712–725. [https://doi.org/10.1093/forestry/cpaf006](https://doi.org/10.1093/forestry/cpaf006)
 
-<div id="perez2022"></div>
+<div id="puliti2023"></div>
 
-* Pérez-Cruz, J., et al. (2022). Applying High-Resolution UAV-LiDAR and Quantitative Structure Modelling for Estimating Tree Attributes in a Crop-Livestock-Forest System. *Land*.
-
-<div id="raumonen2020"></div>
-
-* Raumonen, P., et al. (2020). AdQSM: A New Method for Estimating Above-Ground Biomass from TLS Point Clouds. *Remote Sensing*.
+* Puliti, S., McLean, J. P., Cattaneo, N., Fischer, C., & Astrup, R. (2023). Tree height-growth trajectory estimation using uni-temporal UAV laser scanning data and deep learning. *Forestry: An International Journal of Forest Research*, 96(1), 37–48. [https://doi.org/10.1093/forestry/cpac026](https://doi.org/10.1093/forestry/cpac026)
 
 <div id="riegl2025"></div>
 
-* RIEGL Laser Measurement Systems GmbH. 2025. RIEGL VZ-400i: High Performance 3D Laser Scanner.
+* RIEGL Laser Measurement Systems GmbH. 2025. RIEGL VZ-400i: High Performance 3D Laser Scanner. [https://www.riegl.com/de-deutschland/products/detail/riegl-vz-400i](https://www.riegl.com/de-deutschland/products/detail/riegl-vz-400i) (Accessed March 3rd 2026)
 
 <div id="sapkota2024"></div>
 
 * Sapkota, R., & Karkee, M. (2024). Integrating YOLO11 and Convolution Block Attention Module for Multi-Season Segmentation of Tree Trunks and Branches in Commercial Apple Orchards (arXiv:2412.05728). *arXiv*. [https://doi.org/10.48550/arXiv.2412.05728](https://doi.org/10.48550/arXiv.2412.05728)
 
+<div id="sheng2024"></div>
+
+* Sheng, Y., Zhao, Q., Wang, X., Liu, Y., & Yin, X. (2024). Tree Diameter at Breast Height Extraction Based on Mobile Laser Scanning Point Cloud. *Forests*, 15(4). [https://doi.org/10.3390/f15040590](https://doi.org/10.3390/f15040590)
+
 <div id="tziafas2023"></div>
 
 * Tziafas, G., & Kasaei, H. (2023). Early or Late Fusion Matters: Efficient RGB-D Fusion in Vision Transformers for 3D Object Recognition (arXiv:2210.00843). *arXiv*. [https://doi.org/10.48550/arXiv.2210.00843](https://doi.org/10.48550/arXiv.2210.00843)
-
-<div id="wang2024"></div>
-
-* Wang, Y., et al. (2024). Tree Diameter at Breast Height Extraction Based on Mobile Laser Scanning Point Cloud. *Forests*.
 
 <div id="zhang2023"></div>
 
