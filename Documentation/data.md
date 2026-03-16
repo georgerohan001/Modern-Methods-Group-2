@@ -16,7 +16,7 @@ The excursion was on **2 March 2026** in the **Mathislewald**, located in the Bl
 
 <figure>
   <div align="center">
-    <img src="./Images/Map.png" alt="An OSM Map of the Area of Interest" width="500">
+    <img src="./Images/Map.png" alt="An OSM Map of the Area of Interest" width="600">
     <figcaption><b>Figure 1:</b> An OSM Map of the Area of Interest</figcaption>
   </div>
 </figure>
@@ -29,7 +29,7 @@ The scanned stand consists of a **mixed coniferous forest**, predominantly compo
 
 <figure>
   <div align="center">
-    <img src="./Images/Mathislewald.png" alt="An Image of the University research plot within the Matthislewald in the winter" width="500">
+    <img src="./Images/Mathislewald.png" alt="An Image of the University research plot within the Matthislewald in the winter" width="600">
     <figcaption><b>Image 1:</b> An Image of the University research plot within the Matthislewald in the winter</figcaption>
   </div>
 </figure>
