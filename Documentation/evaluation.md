@@ -6,12 +6,18 @@ Two different approaches were used to evaluate the predictions. First, bounding 
 
 **Precision:**
 
-$$\text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}}$$,
+$$
+\text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}}
+$$
 
-**Recall:** 
+**Recall:**
 
-$$\text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}}$$,
+$$
+\text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}}
+$$
 
 **F1 Score:**
  
-$$\text{F1 Score} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}$$.
+$$
+\text{F1 Score} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}
+$$
