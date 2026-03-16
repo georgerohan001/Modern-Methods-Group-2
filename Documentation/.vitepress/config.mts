@@ -18,7 +18,7 @@ export default defineConfig({
     // The Sidebar Menu
     sidebar: [
       {
-        text: '1.. Introduction',
+        text: '1. Introduction',
         items: [
           { text: 'Project Motivation', link: '/motivation' },
         ]
