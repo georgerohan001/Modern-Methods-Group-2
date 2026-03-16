@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import mathjax3 from 'markdown-it-mathjax3'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -7,6 +8,12 @@ export default defineConfig({
   
   title: "Modern Methods: Group 1",
   description: "Final paper: Forest surveying using TLS, UAVs, and YOLOv11 deep learning.",
+
+  markdown: {
+    config: (md) => {
+      md.use(mathjax3)
+    }
+  },
   
   themeConfig: {
     // Top Navigation Bar
