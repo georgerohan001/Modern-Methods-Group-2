@@ -502,106 +502,75 @@ Workflow/OUTPUT
 
 # 14. Evaluate Model Performance
 
-The repository includes scripts to evaluate both pixel-level and object-level metrics. These help analyze the performance of the trained YOLO model in predicting tree components.
+The repository includes scripts to evaluate model performance and visualize results. These help analyze the performance of the trained YOLO model in predicting tree components.
 
 ---
 
-## 14.1 Pixel-Level Metrics Evaluation
+## 14.1 Benchmark Evaluation
 
-Script: `pixel_metrics.py`
+Script: `Workflow/benchmark.py`
 
-This script calculates **pixel-level metrics**
+This script computes **pixel-level and object-level metrics**, including confusion matrices, precision, recall, F1-score, mAP, and mIoU.
 
 ### Install Dependencies
 
-Ensure the required libraries are installed:
 ```bash
 pip install laspy numpy pandas opencv-python matplotlib ultralytics pillow
 ```
 
 ### Input Requirements
 
-1. **LAS Files**: Segmented point cloud files, placed in the `TEST` directory.
-2. **Predictions**: YOLO prediction files (stored in `PREDICTED` during step 11).
-3. **Metadata JSON**: Generated during slicing (step 4).
+1. **LAS Files**: Segmented point cloud files, placed in the `Workflow/TEST` directory.
+2. **Model Weights**: Trained YOLO model at `Workflow/Model/best.pt`.
+3. **Channel Images**: Original slices in `Workflow/Channels/channel0/`.
 
 ### Run the Script
 
-Run the evaluation:
 ```bash
-python pixel_metrics.py
+cd Workflow
+python benchmark.py
 ```
+
+Optional arguments:
+- `--conf` — Confidence threshold (default: `0.10`)
+- `--tree` — Filter to specific tree names
+- `--output-root` — Custom output directory (default: `OUTPUT/benchmark`)
 
 ### Outputs
 
-1. **Confusion Matrices**: 
-   - Visualization of prediction-vs-ground-truth classifications.
-   - Stored for each tree in:
-     ```
-     OUTPUT/pixel_metrics/confusion_matrices/<tree_name>/
-     ```
-   - Example files:
-     - `confusion_matrix_normalized.png`
-
-2. **Overall Statistics**:
-   - Summary metrics are **printed on the console**.
-   - Metrics include precision, recall, F1-score, Pixel Accuracy, Foreground Accuracy, and mIoU.
-
-3. **Per-Tree Details**:
-   - Individual results for each tree, including class-level statistics, stored alongside confusion matrices.
+1. **Confusion Matrices**: Stored in `OUTPUT/benchmark/confusion_matrices/<tree_name>/`
+2. **Console Metrics**: Precision, recall, F1-score, Pixel Accuracy, Foreground Accuracy, mIoU, mAP50, mAP75, mAP50-95
+3. **Per-Tree Details**: Individual results alongside confusion matrices
 
 ---
 
-## 14.2 YOLO Object-Level Metrics Evaluation
+## 14.2 Visualization
 
-Please run `pixel_metrics.py` first!
+Script: `Workflow/visualization.py`
 
-Script: `yolo_metrics.py`
-
-This script computes **object-level metrics** using YOLO’s built-in evaluation tools. It evaluates the detection accuracy of the model at the bounding box level.
-
-### Metrics Generated
-
-- **Detection Metrics**:
-  - `mAP50`: Mean Average Precision at IoU threshold of 50%.
-  - `mAP75`: Mean Average Precision at IoU threshold of 75%.
-  - `mAP50-95`: Average Precision across IoU thresholds from 50% to 95% (COCO-style evaluation).
-- **Box-Level Metrics**:
-  - Mean Precision (MP)
-  - Mean Recall (MR)
-  - F1-score
+This script renders **3D point cloud visualizations** of classified LAS files, producing publication-ready composite images with class-colored point clouds, titles, and a legend.
 
 ### Install Dependencies
 
-Install the required libraries:
 ```bash
-pip install ultralytics torch pathlib
+pip install laspy pyvista numpy matplotlib pillow
 ```
 
 ### Input Requirements
 
-1. **Images and Labels**: Dataset structured with images and YOLO labels in `<DATASET_ROOT>/images` and `<DATASET_ROOT>/labels` directories.
-2. **Model Weights**: Provide the trained YOLO model weights in `Model/best.pt`.
+1. **LAS Files**: Classified point cloud files in `Workflow/OUTPUT/` (output from the benchmark or prediction steps).
 
 ### Run the Script
 
 ```bash
-python yolo_metrics.py
+cd Workflow
+python visualization.py
 ```
 
 ### Outputs
 
-1. **Printed Metrics**:
-   - Detailed metrics such as `mAP50`, `mAP50-95`, `mAP75`, mean precision, mean recall, and F1-score are printed on the console.
-
-2. **Dataset Information**:
-   - The prepared dataset structure, including links to images and labels, is stored in:
-     ```
-     OUTPUT/yolo_metrics/tmp_dataset_all
-     ```
-   - `data.yaml` file is generated within this directory, detailing the dataset configuration.
-
-These metrics provide insights into how well the model is detecting tree components at both pixel-level and object-level resolutions.
+- Rendered PNG images saved to `Images_Output/`
+- A composite figure showing all trees side-by-side, colored by classification (trunk, branch, twigs, grass), with a legend and source labels
 
 ---
 
