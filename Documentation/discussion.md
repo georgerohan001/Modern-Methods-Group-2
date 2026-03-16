@@ -1,44 +1,9 @@
-# 7. Discussion & Conclusion
+# 7. Discussion
 
-This section evaluates the efficacy of the 4-channel YOLOv11s approach, addresses the pragmatic choices made during development, and outlines the trajectory for future research in automated forest mensuration.
+The results demonstrate that 2D object detection is a highly effective shortcut for structural tree modeling, particularly given our limited training data and time. While the model reliably isolates the trunk, it has difficulty in distinguishing between twigs and branches. Grass was heavily underrepresented, which directly explains its poor detection rates. Confusion between branches and twigs appears to at least partially be caused by inconsistencies in the annotation process, suggesting that future improvements depend more on standardized annotation protocols and diverse data than on dataset scaling alone. Although we consider the current pixel-based evaluation to be quite representative of actual model performance, a next logical step would be to evaluate the tree segmentation directly at the point cloud level, since this represents the actual output.
 
----
+Using object detection was a good starting point due to easy annotation with bounding boxes. However, coarse bounding boxes make it difficult to capture twigs and branches accurately in the training data. Moving to **instance segmentation** and using precise polygons for labeling could address this (e.g. YOLO11-seg, [Jocher et al., 2023](./references.md#jocher2023)). For example, [Sapkota and Karkee (2024)](./references.md#sapkota2024) showed a good performance of YOLO11-seg on isolating trunks and branches on RGB images. 
 
-## 7.1 Detection vs. Segmentation: A Pragmatic Choice
-One of the most significant architectural decisions was opting for **Object Detection (Bounding Boxes)** over **Instance Segmentation (Masks)**. While segmentation is often seen as the "gold standard" for 3D point cloud classification, our 2D slicing approach introduced unique challenges.
+Regarding the architecture, the YOLO11s variant provides a good balance of speed and accuracy for this workflow. While larger variants could improve mask precision, they require significantly higher computational power ([Sapkota and Karkee, 2024](./references.md#sapkota2024)). The **multi-channel setup** should help with vertical context. Getting more insights into the model and individual channel contribution to the prediction quality could guide further improvements. Regarding the fourth input channel, initializing its weights using the mean of the RGB channels is a practical approach, but it may not be ideal because the relative height gradient represents a different modality rather than color information ([Gupta et al., 2014](./references.md#gupta2014)). Future work could include processing the height channel with a separate encoder or using zero-initialization so the model can learn this new information more gradually ([Liu et al., 2024](./references.md#liu2024)); [Zhang et al., 2023](./references.md#zhang2023).
 
-### Why Detection was Chosen
-* **Overlap Complexity:** In the tree crown, branches frequently overlap in the XY projection. In a standard semantic segmentation mask, a single pixel cannot easily represent multiple overlapping branches. 
-* **Label Ambiguity:** Detection bounding boxes can overlap freely without creating label conflicts, allowing the model to "see" through dense clusters of twigs and branches.
-* **Computational Efficiency:** Detection is significantly faster to train and infer, which was a priority for processing high-resolution TLS data within project timelines.
-
-### Future Potential for Segmentation
-While detection was a valid starting choice, moving toward **Instance Segmentation (e.g., YOLOv11-seg)** could offer:
-* **Precise Boundaries:** Tighter pixel-to-point mapping during 3D back-translation.
-* **Direct Metrics:** The ability to calculate branch diameter or cross-sectional area directly from the mask geometry rather than approximating from box dimensions.
-
----
-
-## 7.2 The Multi-Channel Innovation
-Our use of a 4-channel input—integrating vertical context (Ch1, Ch2) and height encoding (Ch3)—is a non-standard adaptation of the YOLO architecture.
-
-* **The Power of Height Encoding:** Channel 3 (`index-gray`) proved vital. It implicitly taught the model that the **Trunk** persists across all height percentiles, whereas **Grass** is strictly confined to the base (0–5% height).
-* **Weight Initialization Limitations:** Initializing the 4th channel weights as the *mean* of the RGB weights was a functional shortcut. However, because the height index is a different data modality (spatial vs. density), future work should explore initializing these weights to zero or using a separate dedicated encoder for the height channel.
-
----
-
-## 7.3 Precision-Recall Trade-offs
-At the conclusion of training, the model exhibited a notable disparity between **Precision (~0.78)** and **Recall (~0.47)**.
-
-* **Conservative Behavior:** The model is "conservative"—it is more likely to miss a detection (lower recall) than to produce a false alarm (higher precision). 
-* **Class Imbalance:** This behavior is likely linked to the natural structure of the data: almost every slice contains a trunk, but only a fraction contains complex branch/twig networks. This imbalance creates a bias where the model prioritizes high-confidence detections.
-
----
-
-## 7.4 Model Scaling
-The **YOLOv11s (Small)** variant was selected for its rapid iteration speed. While it proved highly capable of identifying simple geometric cross-sections, the "Small" capacity may be a bottleneck for distinguishing between the **Branch** and **Twigs** classes, which share similar circular geometries but differ in scale and context. Testing **Medium (m)** or **Large (l)** variants could bridge the gap in recall for these fine-grained classes.
-
----
-
-## 7.5 Final Conclusion
-Our workflow successfully demonstrates that 3D TLS point clouds can be effectively segmented using high-speed 2D computer vision techniques. By engineering vertical context into the input tensors, we achieved a pragmatic and scalable pipeline for forest structural analysis. This methodology provides a robust foundation for future automated biomass estimation and high-fidelity tree architecture modeling.
+Recent studies support the use of YOLO architectures in combination with point clouds. For instance, [Pehkonen et al. (2025)](./references.md#pehkonen2025) and [Puliti et al. (2023)](./references.md#puliti2023) successfully used YOLO to detect branch whorls by projecting point clouds into 2D renders. Similarly, [Li and Yan (2024)](./references.md#li2024) demonstrated that YOLO-based instance segmentation can effectively isolate street trees by mapping 2D pixel-wise proposals from mobile laser scanning data back to the 3D point cloud.

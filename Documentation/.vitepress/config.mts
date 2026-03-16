@@ -28,6 +28,7 @@ export default defineConfig({
         text: '1. Introduction',
         items: [
           { text: '1.1 Project Motivation', link: '/motivation' },
+          { text: '1.2 Author Contributions', link: '/contributions' },
         ]
       },
       {
@@ -45,7 +46,8 @@ export default defineConfig({
         items: [
           { text: '3.1 Results', link: '/results' },
           { text: '3.2 Discussion', link: '/discussion' },
-          { text: '3.3 References', link: '/references' },
+          { text: '3.3 Conclusion', link: '/conclusion' },
+          { text: '3.4 References', link: '/references' },
         ]
       }
     ],
