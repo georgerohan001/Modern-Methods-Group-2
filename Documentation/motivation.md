@@ -1,34 +1,8 @@
-# 1. Motivation
+# 1.1 Motivation
 
-The transition from traditional forest inventory to high-precision individual tree modeling represents a paradigm shift in sustainable forest management. As foresters move beyond stand-level estimates, the ability to decompose complex point clouds into structural components becomes the foundational step for advanced analytics.
+Forestry is increasingly using 3D measurements to move beyond broad stand-level estimates and toward models of individual trees (Gonzalez de Tanago et al., 2018). An important step in this process is breaking a single-tree point cloud into its main structural parts, especially separating the stem from branches, twigs, and ground points. This distinction is vital because accurate stem isolation directly improves estimates of taper, merchantable trunk volume, and wood quality metrics like stem straightness ([Kurdi et al., 2024](./references.md#kurdi2024); [Morgan et al., 2022](./references.md#morgan2022)).
 
----
+Traditionally, stem biomass and volume have been estimated using allometric equations based on manual measurements such as diameter at breast height and tree height. More recent methods utilize LiDAR-based Quantitative Structure Models (QSMs) which fit cylinders directly to the tree’s geometry (Hackenberg et al., 2015; Raumonen et al., 2020; Pérez-Cruz et al., 2022). However, these cylinder-fitting methods often struggle with occlusion from dense canopies and clutter from surrounding vegetation. This means that misidentified and noisy points can easily distort the reconstruction and bias estimates ([Hackenberg et al., 2015](./references.md#hackenberg2015)).
 
-## The Necessity of Structural Decomposition
-Decomposing a single-tree point cloud into its primary components—**trunk, branches, twigs, and ground/grass**—is a prerequisite for several high-value forestry applications:
+To overcome this problem, we treat structural decomposition as a 2D object-detection task. We project horizontal slices of the point cloud into multi-channel density images and use YOLO11s to detect cross-sectional structures, which helps isolate the trunk, branches and twigs. Applying 2D deep learning to rendered point clouds leverages highly mature networks that are computationally efficient and significantly easier to annotate than raw 3D data ([Pehkonen et al., 2025](./references.md#pehkonen2025)), our pipeline uniquely uses these 2D detections as the basis to reconstruct 3D tree models. This approach could improve estimating trunk biomass, taper, and volume, while avoiding the higher computational overhead of full 3D semantic segmentation ([Hao et al., 2022](./references.md#hao2022); [Liu et al., 2024](./references.md#liu_y2024); [Wang et al., 2024](./references.md#wang2024)).
 
-* **Trunk Volume & Taper:** Accurate estimation of merchantable volume and stem tapering.
-* **Wood Quality Metrics:** Assessing stem straightness and potential bending stress.
-* **Biomass Modeling:** Moving beyond allometric equations to direct geometric measurements.
-* **Structural Analysis:** Understanding tree architecture for ecological and physiological studies.
-
-> [!IMPORTANT] Our Approach
-> We transform the complex 3D detection problem into a streamlined **2D object detection** task. By horizontally slicing the point cloud and generating 2D density rasters, we leverage the speed and accuracy of **YOLOv11s** on multichannel cross-sectional images.
-
----
-
-## Background & Literature Review
-
-### From Stand-Level to Individual Trees
-Forestry is increasingly utilizing 3D measurements to move beyond broad stand-level estimates toward models of individual trees (Calders et al., 2017). A critical step in this process is breaking a single-tree point cloud into its main structural parts—specifically separating the stem from branches, twigs, and ground points. This distinction is vital because accurate stem isolation directly improves estimates of taper, trunk volume, and stem quality derived from LiDAR data (Chen et al., 2024; Luoma et al., 2022).
-
-### Limitations of Traditional Geometric Fitting
-Traditionally, stem biomass and volume have been estimated using allometric equations based on manual measurements like DBH (Diameter at Breast Height). Modern methods utilize LiDAR-based **Quantitative Structure Models (QSMs)**, such as *SimpleTree* and *AdQSM*, which fit cylinders directly to the tree’s geometry (Hackenberg et al., 2015; Raumonen et al., 2020; Pérez-Cruz et al., 2022).
-
-However, these cylinder-fitting methods often struggle with:
-1.  **Occlusion:** Missing data points in dense canopies.
-2.  **Clutter:** Noisy points from surrounding vegetation.
-3.  **Bias:** Branches or twigs being misidentified as part of the stem, distorting volume estimates (Hackenberg et al., 2015).
-
-### The YOLOv11 Workflow
-To overcome these limitations, we treat structural decomposition as a **2D object-detection task**. By projecting horizontal slices of the point cloud into multi-channel density images, we use **YOLOv11s** to detect cross-sectional structures. This isolates the stem before further geometric modeling occurs, creating a cleaner input for biomass and taper estimation while avoiding the high computational overhead of full **3D semantic segmentation** (Hao et al., 2022; Liu et al., 2024; Wang et al., 2024).

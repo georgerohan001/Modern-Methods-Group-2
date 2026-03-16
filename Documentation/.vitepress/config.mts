@@ -18,25 +18,26 @@ export default defineConfig({
     // The Sidebar Menu
     sidebar: [
       {
-        text: 'I. Introduction',
+        text: '1.. Introduction',
         items: [
           { text: 'Project Motivation', link: '/motivation' },
-          { text: 'Data Acquisition', link: '/data' },
         ]
       },
       {
-        text: 'II. The Pipeline',
+        text: '2. The Pipeline',
         items: [
+          { text: 'Data Acquisition', link: '/data' },
           { text: 'Preprocessing & Slicing', link: '/preprocessing' },
           { text: 'Model Architecture', link: '/model' },
           { text: 'Training Process', link: '/training' },
         ]
       },
       {
-        text: 'III. Outcomes',
+        text: '3. Outcomes',
         items: [
           { text: 'Results', link: '/results' },
           { text: 'Discussion', link: '/discussion' },
+          { text: 'References', link: '/references' },
         ]
       }
     ],
