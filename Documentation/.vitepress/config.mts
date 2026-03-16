@@ -26,16 +26,17 @@ export default defineConfig({
       {
         text: '2. The Pipeline',
         items: [
-          { text: '2.2 Data Acquisition', link: '/data' },
-          { text: '2.3 Preprocessing & Slicing', link: '/preprocessing' },
-          { text: '2.4 Model Architecture', link: '/model' },
-          { text: '2.5 Training Process', link: '/training' },
+          { text: '2.1 Data Acquisition', link: '/data' },
+          { text: '2.2 Preprocessing & Slicing', link: '/preprocessing' },
+          { text: '2.3 Model Architecture', link: '/model' },
+          { text: '2.4 Training Process', link: '/training' },
+          { text: '2.5 Model Evaluation and Testing', link: '/evaluation' },
         ]
       },
       {
         text: '3. Outcomes',
         items: [
-          { text: '3.1Results', link: '/results' },
+          { text: '3.1 Results', link: '/results' },
           { text: '3.2 Discussion', link: '/discussion' },
           { text: '3.3 References', link: '/references' },
         ]
