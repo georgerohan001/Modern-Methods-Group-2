@@ -112,3 +112,14 @@ Four object classes were defined:
 
 The dataset was subsequently exported into the **YOLO 1.1 format**, which includes **TXT** files describing the annotation boxes (see Image below).
 
+<div align="center">
+  <table>
+    <tr>
+      <td><img src="./Images/CVAT-Labelling.png" width="600" alt="CVAT Interface Along With TXT Output Format"></td>
+    </tr>
+    <tr>
+      <td><img src="./Images/Tree-Animation.gif" width="600" alt="CVAT Interface Along With TXT Output Format"></td>
+    </tr>
+  </table>
+  <p><b>Image 3:</b> CVAT Interface Along With TXT Output Format (top) and an example of how the trees are marked for an entire tree (bottom)</p>
+</div>
