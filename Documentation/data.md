@@ -86,8 +86,8 @@ This metadata enables the original 3D spatial context to be reconstructed if req
 <div align="center">
   <table>
     <tr>
-      <td><img src="./Images/Cross-Section.png" width="250" alt="A Cross-Section Image of a Conifer Point Cloud"></td>
-      <td><img src="./Images/Metadata-Example.png" width="300" alt="Example metadata of the slice"></td>
+      <td><img src="./Images/Cross-Section.png" width="300" alt="A Cross-Section Image of a Conifer Point Cloud"></td>
+      <td><img src="./Images/Metadata-Example.png" width="350" alt="Example metadata of the slice"></td>
     </tr>
   </table>
   <p><b>Image 2:</b> A Cross-Section Image of a Conifer Point Cloud (left) and example metadata of the slice (right)</p>
