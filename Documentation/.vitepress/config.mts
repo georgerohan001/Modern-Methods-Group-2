@@ -20,24 +20,24 @@ export default defineConfig({
       {
         text: '1. Introduction',
         items: [
-          { text: 'Project Motivation', link: '/motivation' },
+          { text: '1.1 Project Motivation', link: '/motivation' },
         ]
       },
       {
         text: '2. The Pipeline',
         items: [
-          { text: 'Data Acquisition', link: '/data' },
-          { text: 'Preprocessing & Slicing', link: '/preprocessing' },
-          { text: 'Model Architecture', link: '/model' },
-          { text: 'Training Process', link: '/training' },
+          { text: '2.2 Data Acquisition', link: '/data' },
+          { text: '2.3 Preprocessing & Slicing', link: '/preprocessing' },
+          { text: '2.4 Model Architecture', link: '/model' },
+          { text: '2.5 Training Process', link: '/training' },
         ]
       },
       {
         text: '3. Outcomes',
         items: [
-          { text: 'Results', link: '/results' },
-          { text: 'Discussion', link: '/discussion' },
-          { text: 'References', link: '/references' },
+          { text: '3.1Results', link: '/results' },
+          { text: '3.2 Discussion', link: '/discussion' },
+          { text: '3.3 References', link: '/references' },
         ]
       }
     ],

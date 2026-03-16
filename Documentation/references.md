@@ -28,11 +28,7 @@
 
 * Li, Q., & Yan, Y. (2024). Street tree segmentation from mobile laser scanning data using deep learning-based image instance segmentation. *Urban Forestry & Urban Greening*, 92, 128200. [https://doi.org/10.1016/j.ufug.2023.128200](https://doi.org/10.1016/j.ufug.2023.128200)
 
-<div id="liu_y2024"></div>
-
-* Liu, Y., et al. (2024). Deep Learning Analysis of UAV Lidar Point Cloud for Individual Tree Detecting. *IEEE*.
-
-<div id="liu_x2024"></div>
+<div id="liu2024"></div>
 
 * Liu, X., Qi, L., Song, Y., & Wen, Q. (2024). Depth awakens: A depth-perceptual attention fusion network for RGB-D camouflaged object detection. *Image and Vision Computing*, 143, 104924. [https://doi.org/10.1016/j.imavis.2024.104924](https://doi.org/10.1016/j.imavis.2024.104924)
 
