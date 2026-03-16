@@ -3,3 +3,4 @@
 *.jpeg
 *.jpg
 *.png
+!/Documentation/Images/*.png
