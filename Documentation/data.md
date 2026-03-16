@@ -16,7 +16,7 @@ The excursion was on **2 March 2026** in the **Mathislewald**, located in the Bl
 
 <figure>
   <div align="center">
-    <img src="https://keep.google.com/u/0/media/v2/15tGNsZw0Tm14VqFZc-80-u3LDgbMCtL3DRAB9y5lLGFGav7u1_1TpHsl4S2cPg/1vDUZ9WHQwV03qqrCYQgef_EKK_ZOYcEa-5I_2hsN7G4vWsw0FPHHtYjTNkm-cg?sz=512&accept=image%2Fgif%2Cimage%2Fjpeg%2Cimage%2Fjpg%2Cimage%2Fpng%2Cimage%2Fwebp" alt="An OSM Map of the Area of Interest" width="500">
+    <img src="./Images/Map.png" alt="An OSM Map of the Area of Interest" width="500">
     <figcaption><b>Figure 1:</b> An OSM Map of the Area of Interest</figcaption>
   </div>
 </figure>
@@ -29,7 +29,7 @@ The scanned stand consists of a **mixed coniferous forest**, predominantly compo
 
 <figure>
   <div align="center">
-    <img src="https://keep.google.com/u/0/media/v2/1IH9ti5daNz9HxnhI59XBmbNH0T-fj5z73Lr0RMJxg_WQzrriPHlKEauJBjlNYw/1ogZxDwEFRMi2-OIdvDV9yVC6-yg2Ol4-mOJ3j5FQv9qGMqNdZBL_SD2xWGm7wJw?sz=512&accept=image%2Fgif%2Cimage%2Fjpeg%2Cimage%2Fjpg%2Cimage%2Fpng%2Cimage%2Fwebp" alt="An Image of the University research plot within the Matthislewald in the winter" width="500">
+    <img src="./Images/Mathislewald.png" alt="An Image of the University research plot within the Matthislewald in the winter" width="500">
     <figcaption><b>Image 1:</b> An Image of the University research plot within the Matthislewald in the winter</figcaption>
   </div>
 </figure>
@@ -86,8 +86,8 @@ This metadata enables the original 3D spatial context to be reconstructed if req
 <div align="center">
   <table>
     <tr>
-      <td><img src="https://keep.google.com/u/0/media/v2/1jI8a_Hg4_WNw_37rVOw4hub3QA7A9ClH-pMsLibUIVWMhqyZV1TEeGJ4-8w/1lqJnMLNT-xP05wm5bEN6FikH4_t6J7z0L2C6TJSwRapmzmu1iM83lMt070vwow?accept=image%2Fgif%2Cimage%2Fjpeg%2Cimage%2Fjpg%2Cimage%2Fpng%2Caudio%2Faac&sz=664" width="250" alt="A Cross-Section Image of a Conifer Point Cloud"></td>
-      <td><img src="https://keep.google.com/u/0/media/v2/1N7yv8ZzWj4RVM7Duh4qa6xlAILWv15ccsmNzXm64AhatZpPRw31HQ7A8NuSNe9Y/1dbzxVirI1fCtLjwizTmuYUXHa8ztajoP-15P8iKsQ1x5L8_WecJ-nvUzXI1X3g?accept=image%2Fgif%2Cimage%2Fjpeg%2Cimage%2Fjpg%2Cimage%2Fpng%2Caudio%2Faac&sz=430" width="300" alt="Example metadata of the slice"></td>
+      <td><img src="./Images/Cross-Section.png" width="250" alt="A Cross-Section Image of a Conifer Point Cloud"></td>
+      <td><img src="./Images/Metadata-Example.png" width="300" alt="Example metadata of the slice"></td>
     </tr>
   </table>
   <p><b>Image 2:</b> A Cross-Section Image of a Conifer Point Cloud (left) and example metadata of the slice (right)</p>
@@ -99,9 +99,7 @@ On average, this process generated approximately **150 slices per tree**, depend
 
 ## 2.1.6 Dataset Annotation
 
-The resulting slice images were imported into **CVAT (Computer Vision Annotation Tool)** for manual labeling.
-
-Each image was inspected and annotated using **axis-aligned bounding boxes** to identify visible structural elements within the slice.
+The resulting slice images were imported into **CVAT (Computer Vision Annotation Tool)** for manual labeling. Each image was inspected and annotated using **bounding boxes**.
 
 Four object classes were defined:
 
@@ -112,12 +110,5 @@ Four object classes were defined:
 | **Twigs** | Fine distal branches and terminal growth |
 | **Grass** | Low vegetation and forest floor clutter |
 
-The annotation process required careful visual interpretation, since individual slices represent only a thin horizontal cross-section of the tree.
+The dataset was subsequently exported into the **YOLO 1.1 format**, which includes **TXT** files describing the annotation boxes (see Image below).
 
-After completion of the labeling process, the dataset was exported from CVAT in **YOLO 1.1 format**. In this format:
-
-- Each image is associated with a **text file containing bounding box coordinates**.
-- Each object class is represented by a **numeric index (0–3)**.
-- A separate configuration file maps each index to its corresponding class label.
-
-This labeled dataset forms the foundation for training the object detection model described in the following chapters.
